@@ -8,11 +8,13 @@ import { SoundMixer } from '../mixer';
  */
 export class Controls {
   private readonly container: HTMLElement;
+  private readonly activeSoundscapes = new Set<string>();
 
   constructor(
     private readonly mixer: SoundMixer,
     private readonly sounds: SoundMeta[],
     private readonly onStateChange: () => void,
+    private readonly compositions: Record<string, { id: string; volume: number }[]> = {},
   ) {
     this.container = document.getElementById('app')!;
     this.render();
@@ -95,8 +97,13 @@ export class Controls {
       card.addEventListener('click', async (e) => {
         // Don't toggle when clicking the slider
         if ((e.target as HTMLElement).classList.contains('volume-slider')) return;
-        await this.mixer.toggleSound(id);
-        this.updateCard(id);
+
+        if (this.compositions[id]) {
+          await this.toggleSoundscape(id);
+        } else {
+          await this.mixer.toggleSound(id);
+          this.updateCard(id);
+        }
         this.onStateChange();
       });
     });
@@ -123,6 +130,7 @@ export class Controls {
     // Stop all
     document.getElementById('stop-all')?.addEventListener('click', () => {
       this.mixer.stopAll();
+      this.activeSoundscapes.clear();
       this.updateAllCards();
       this.onStateChange();
     });
@@ -137,11 +145,60 @@ export class Controls {
 
     const status = card.querySelector('.sound-card__status');
     if (status) status.textContent = state.active ? 'ON' : 'OFF';
+
+    const slider = card.querySelector('.volume-slider') as HTMLInputElement;
+    if (slider) slider.value = String(state.volume * 100);
   }
 
   updateAllCards(): void {
     for (const id of Object.keys(this.mixer.state.sounds)) {
-      this.updateCard(id);
+      if (!this.compositions[id]) {
+        this.updateCard(id);
+      }
     }
+    for (const id of Object.keys(this.compositions)) {
+      this.updateSoundscapeCard(id);
+    }
+  }
+
+  private async toggleSoundscape(id: string): Promise<void> {
+    const composition = this.compositions[id];
+    if (!composition) return;
+
+    const isActive = this.activeSoundscapes.has(id);
+
+    if (isActive) {
+      // Turn off all component sounds
+      for (const component of composition) {
+        if (this.mixer.state.sounds[component.id]?.active) {
+          await this.mixer.toggleSound(component.id);
+          this.updateCard(component.id);
+        }
+      }
+      this.activeSoundscapes.delete(id);
+    } else {
+      // Turn on all component sounds with preset volumes
+      for (const component of composition) {
+        this.mixer.setVolume(component.id, component.volume);
+        if (!this.mixer.state.sounds[component.id]?.active) {
+          await this.mixer.toggleSound(component.id);
+        }
+        this.updateCard(component.id);
+      }
+      this.activeSoundscapes.add(id);
+    }
+
+    this.updateSoundscapeCard(id);
+  }
+
+  private updateSoundscapeCard(id: string): void {
+    const card = this.container.querySelector(`[data-sound-id="${id}"]`);
+    if (!card) return;
+
+    const isActive = this.activeSoundscapes.has(id);
+    card.classList.toggle('active', isActive);
+
+    const status = card.querySelector('.sound-card__status');
+    if (status) status.textContent = isActive ? 'ON' : 'OFF';
   }
 }

@@ -98,6 +98,28 @@ for (const meta of soundMetas) {
   registry.register(meta, generators[meta.id]);
 }
 
+// Soundscape compositions — clicking a soundscape activates these individual sounds
+const soundscapeCompositions: Record<string, { id: string; volume: number }[]> = {
+  'roman-piazza': [
+    { id: 'flowing-river', volume: 0.4 },
+    { id: 'crowd-murmur', volume: 0.5 },
+    { id: 'horse-hooves', volume: 0.3 },
+    { id: 'birds-at-dawn', volume: 0.2 },
+  ],
+  'ancient-kyoto': [
+    { id: 'forest-wind', volume: 0.3 },
+    { id: 'crickets-night', volume: 0.25 },
+    { id: 'tibetan-bowl', volume: 0.35 },
+    { id: 'flowing-river', volume: 0.2 },
+  ],
+  'amsterdam-canal': [
+    { id: 'ocean-waves', volume: 0.35 },
+    { id: 'light-drizzle', volume: 0.3 },
+    { id: 'crowd-murmur', volume: 0.3 },
+    { id: 'birds-at-dawn', volume: 0.2 },
+  ],
+};
+
 // Create mixer (orchestrator)
 const mixer = new SoundMixer(registry);
 
@@ -107,7 +129,7 @@ const visualizer = new Visualizer(mixer);
 // Create UI controls — pass a callback for state changes
 const controls = new Controls(mixer, soundMetas, () => {
   // State changed — could persist to localStorage, update presets UI, etc.
-});
+}, soundscapeCompositions);
 
 // Keep reference to prevent garbage collection
 Object.assign(globalThis, { __nois: { mixer, visualizer, controls } });
