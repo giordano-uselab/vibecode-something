@@ -12,7 +12,6 @@ export { CoastalWindGenerator } from './coastal-wind';
 // Nature
 export { CracklingFireGenerator } from './fire';
 export { FlowingRiverGenerator } from './flowing-river';
-export { OceanWavesGenerator } from './ocean-waves';
 export { RustlingLeavesGenerator } from './rustling-leaves';
 export { BirdsAtDawnGenerator } from './birds-at-dawn';
 export { CricketsNightGenerator } from './crickets-night';

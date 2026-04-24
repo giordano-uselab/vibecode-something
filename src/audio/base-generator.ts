@@ -23,7 +23,7 @@ export abstract class BaseSoundGenerator implements SoundGenerator {
     this.ctx = ctx;
     this.destination = destination;
     this.gainNode = ctx.createGain();
-    this.gainNode.gain.value = this._volume;
+    this.gainNode.gain.value = this._volume * 3;
     this.gainNode.connect(destination);
   }
 
@@ -42,7 +42,8 @@ export abstract class BaseSoundGenerator implements SoundGenerator {
   setVolume(volume: number): void {
     this._volume = Math.max(0, Math.min(1, volume));
     if (this.gainNode) {
-      this.gainNode.gain.value = this._volume;
+      // Amplify to make full slider range more usable
+      this.gainNode.gain.value = this._volume * 3;
     }
   }
 

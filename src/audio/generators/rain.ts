@@ -31,11 +31,11 @@ export class SteadyRainGenerator extends BaseSoundGenerator {
     this.noiseSource.buffer = buffer;
     this.noiseSource.loop = true;
 
-    // Bandpass filter for rain character
+    // Bandpass filter for rain character — lower freq = heavier, less hissy
     this.filter = ctx.createBiquadFilter();
     this.filter.type = 'bandpass';
-    this.filter.frequency.value = 3000;
-    this.filter.Q.value = 0.5;
+    this.filter.frequency.value = 600;
+    this.filter.Q.value = 0.3;
 
     // Drop simulation gain node
     this.dropGain = ctx.createGain();
@@ -58,7 +58,7 @@ export class SteadyRainGenerator extends BaseSoundGenerator {
           ctx.currentTime + 0.1 + Math.random() * 0.2,
         );
       }
-    }, 100 + Math.random() * 200);
+    }, 60 + Math.random() * 120);
   }
 
   protected teardownAudioGraph(): void {

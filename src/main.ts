@@ -11,7 +11,6 @@ import {
   CoastalWindGenerator,
   CracklingFireGenerator,
   FlowingRiverGenerator,
-  OceanWavesGenerator,
   RustlingLeavesGenerator,
   BirdsAtDawnGenerator,
   CricketsNightGenerator,
@@ -47,7 +46,6 @@ const soundMetas: SoundMeta[] = [
   // Nature
   { id: 'crackling-fire', name: 'Crackling Fire', category: 'basic', icon: '🔥', description: 'Fireplace with wood snapping and low rumble' },
   { id: 'flowing-river', name: 'Flowing River', category: 'basic', icon: '🏞️', description: 'Continuous water flowing over rocks' },
-  { id: 'ocean-waves', name: 'Ocean Waves', category: 'basic', icon: '🏖️', description: 'Rhythmic shoreline waves' },
   { id: 'rustling-leaves', name: 'Rustling Leaves', category: 'basic', icon: '🍂', description: 'Dry leaves shifting on the ground' },
   { id: 'birds-at-dawn', name: 'Birds at Dawn', category: 'basic', icon: '🐦', description: 'Morning birdsong with sparse chirps' },
   { id: 'crickets-night', name: 'Crickets & Night', category: 'basic', icon: '🦗', description: 'Evening insects in a calm night' },
@@ -78,7 +76,6 @@ const generators: Record<string, () => import('./types').SoundGenerator> = {
   'coastal-wind': () => new CoastalWindGenerator(),
   'crackling-fire': () => new CracklingFireGenerator(),
   'flowing-river': () => new FlowingRiverGenerator(),
-  'ocean-waves': () => new OceanWavesGenerator(),
   'rustling-leaves': () => new RustlingLeavesGenerator(),
   'birds-at-dawn': () => new BirdsAtDawnGenerator(),
   'crickets-night': () => new CricketsNightGenerator(),
@@ -113,7 +110,7 @@ const soundscapeCompositions: Record<string, { id: string; volume: number }[]> =
     { id: 'flowing-river', volume: 0.2 },
   ],
   'amsterdam-canal': [
-    { id: 'ocean-waves', volume: 0.35 },
+    { id: 'gentle-breeze', volume: 0.35 },
     { id: 'light-drizzle', volume: 0.3 },
     { id: 'crowd-murmur', volume: 0.3 },
     { id: 'birds-at-dawn', volume: 0.2 },

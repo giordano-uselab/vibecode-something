@@ -2,11 +2,10 @@ import type { SoundCategory } from '../../types';
 import { BaseSoundGenerator } from '../base-generator';
 
 /**
- * Flowing River — water rushing over rocks with gurgling detail.
+ * Flowing River — a gentle brook babbling over pebbles.
  *
- * Technique: Multiple bandpass layers at water frequencies with
- * different modulation rates for varied current + resonant "gurgle"
- * peaks with random modulation for natural water character.
+ * Technique: High-frequency bandpass layers for splashing and tinkling,
+ * fast gurgles, minimal low-end. Light and delicate.
  */
 export class FlowingRiverGenerator extends BaseSoundGenerator {
   readonly id = 'flowing-river';
@@ -24,35 +23,23 @@ export class FlowingRiverGenerator extends BaseSoundGenerator {
   protected buildAudioGraph(ctx: AudioContext, output: GainNode): void {
     const bufferSize = ctx.sampleRate * 2;
 
-    // Layer 1: Deep current — low rumble
+    // Layer 1: Barely-there base — just enough to fill gaps between gurgles
     this.addNoiseLayer(ctx, output, bufferSize, {
-      filterType: 'lowpass', freq: 250, q: 0.4, vol: 0.10,
-      lfoRate: 0.04 + Math.random() * 0.02, lfoDepth: 80,
+      filterType: 'bandpass', freq: 800, q: 0.5, vol: 0.008,
+      lfoRate: 0.08 + Math.random() * 0.04, lfoDepth: 150,
     });
 
-    // Layer 2: Mid flow — the main "rush" of water
+    // Layer 2: Hint of babble — very quiet continuous texture
     this.addNoiseLayer(ctx, output, bufferSize, {
-      filterType: 'bandpass', freq: 900, q: 0.6, vol: 0.08,
-      lfoRate: 0.09 + Math.random() * 0.04, lfoDepth: 300,
+      filterType: 'bandpass', freq: 2200, q: 1.0, vol: 0.006,
+      lfoRate: 0.2 + Math.random() * 0.1, lfoDepth: 600,
     });
 
-    // Layer 3: High splash — babbling/splashing texture
-    this.addNoiseLayer(ctx, output, bufferSize, {
-      filterType: 'bandpass', freq: 3500, q: 1.2, vol: 0.03,
-      lfoRate: 0.25 + Math.random() * 0.1, lfoDepth: 800,
-    });
-
-    // Layer 4: Very high tinkle — water sparkle
-    this.addNoiseLayer(ctx, output, bufferSize, {
-      filterType: 'highpass', freq: 6000, q: 0.3, vol: 0.012,
-      lfoRate: 0.4 + Math.random() * 0.2, lfoDepth: 0,
-    });
-
-    // Periodic gurgle bursts — resonant water sounds
+    // Frequent small gurgles — a chatty brook
     this.gurgleInterval = setInterval(() => {
       if (ctx.state !== 'running') return;
       this.playGurgle(ctx, output);
-    }, 400 + Math.random() * 800);
+    }, 200 + Math.random() * 400);
   }
 
   private addNoiseLayer(ctx: AudioContext, output: GainNode, bufferSize: number, opts: {
@@ -106,14 +93,14 @@ export class FlowingRiverGenerator extends BaseSoundGenerator {
     const gain = ctx.createGain();
 
     osc.type = 'sine';
-    osc.frequency.value = 200 + Math.random() * 600;
+    osc.frequency.value = 400 + Math.random() * 1200;
 
     filter.type = 'bandpass';
-    filter.frequency.value = 400 + Math.random() * 800;
-    filter.Q.value = 8 + Math.random() * 12;
+    filter.frequency.value = 800 + Math.random() * 1500;
+    filter.Q.value = 10 + Math.random() * 15;
 
-    const vol = 0.008 + Math.random() * 0.012;
-    const dur = 0.04 + Math.random() * 0.08;
+    const vol = 0.01 + Math.random() * 0.015;
+    const dur = 0.03 + Math.random() * 0.06;
     gain.gain.setValueAtTime(vol, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
 
