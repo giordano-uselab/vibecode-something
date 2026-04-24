@@ -258,61 +258,6 @@ html, body {
   color: #f87171;
 }
 
-/* Pomodoro Bar */
-.pomodoro-bar {
-  width: 100%;
-  max-width: 720px;
-  padding: 1rem 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.pomodoro-bar__timer {
-  font-size: 2rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-primary);
-  min-width: 120px;
-}
-
-.pomodoro-bar__mode {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--accent);
-}
-
-.pomodoro-bar__controls {
-  margin-left: auto;
-  display: flex;
-  gap: 0.5rem;
-}
-
-.pomodoro-btn {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  padding: 0.5rem 1rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition);
-}
-
-.pomodoro-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.pomodoro-btn.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: white;
-}
-
 /* Presets */
 .presets-bar {
   width: 100%;
@@ -391,23 +336,126 @@ html, body {
   color: var(--accent);
 }
 
-/* Responsive */
-@media (max-width: 480px) {
+/* Responsive — Tablet */
+@media (max-width: 768px) {
   .sound-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 0.75rem;
     padding: 0 1rem;
   }
 
+  .visualizer-container {
+    padding: 0 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .master-controls {
+    padding: 1rem;
+  }
+}
+
+/* Responsive — Mobile */
+@media (max-width: 480px) {
   .header {
-    padding: 1.5rem 1rem 0.75rem;
+    padding: 1.25rem 1rem 0.5rem;
   }
 
   .header h1 {
-    font-size: 2rem;
+    font-size: 1.75rem;
+  }
+
+  .header p {
+    font-size: 0.8rem;
+  }
+
+  .visualizer-container {
+    padding: 0 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .visualizer-canvas {
+    height: 80px;
+  }
+
+  .sound-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    padding: 0 0.75rem;
+  }
+
+  .section-label {
+    font-size: 0.65rem;
+    padding-top: 0.5rem;
   }
 
   .sound-card {
-    padding: 1rem;
+    padding: 0.85rem;
+  }
+
+  .sound-card__icon {
+    font-size: 1.25rem;
+  }
+
+  .sound-card__name {
+    font-size: 0.8rem;
+  }
+
+  .sound-card__status {
+    font-size: 0.65rem;
+  }
+
+  .volume-slider {
+    height: 6px;
+  }
+
+  .volume-slider::-webkit-slider-thumb {
+    width: 18px;
+    height: 18px;
+  }
+
+  .volume-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+  }
+
+  .master-controls {
+    padding: 0.75rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .master-volume-slider::-webkit-slider-thumb {
+    width: 20px;
+    height: 20px;
+  }
+
+  .master-volume-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+  }
+
+  .stop-all-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.75rem;
+  }
+
+  .presets-bar {
+    padding: 0.25rem 0.75rem 1rem;
+  }
+
+  .footer {
+    padding: 1.5rem 0.75rem;
+  }
+}
+
+/* Responsive — Very small phones */
+@media (max-width: 360px) {
+  .sound-grid {
+    grid-template-columns: 1fr;
+    padding: 0 0.5rem;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
   }
 }

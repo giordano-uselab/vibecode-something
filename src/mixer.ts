@@ -19,7 +19,6 @@ export class SoundMixer {
     this._state = {
       sounds: {},
       masterVolume: 0.8,
-      pomodoro: null,
       activePreset: null,
     };
 

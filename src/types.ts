@@ -60,18 +60,7 @@ export interface SoundState {
 export interface AppState {
   sounds: Record<string, SoundState>;
   masterVolume: number;
-  pomodoro: PomodoroState | null;
   activePreset: string | null;
-}
-
-/**
- * Pomodoro timer state.
- */
-export interface PomodoroState {
-  mode: 'focus' | 'break';
-  remainingSeconds: number;
-  totalSeconds: number;
-  isRunning: boolean;
 }
 
 /**

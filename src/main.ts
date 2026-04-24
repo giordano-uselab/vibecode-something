@@ -133,3 +133,8 @@ Object.assign(globalThis, { __nois: { mixer, visualizer, controls } });
 
 // Start the visualizer animation loop
 visualizer.start();
+
+// Register PWA service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {/* ok */});
+}

@@ -55,14 +55,6 @@ export class Controls {
         <button class="save-preset-btn" id="save-preset">+ Save current</button>
       </div>
 
-      <div class="pomodoro-bar" id="pomodoro-bar">
-        <div class="pomodoro-bar__controls">
-          <button class="pomodoro-btn" id="pomodoro-toggle">Pomodoro</button>
-        </div>
-        <span class="pomodoro-bar__timer" id="pomodoro-timer" style="display:none">25:00</span>
-        <span class="pomodoro-bar__mode" id="pomodoro-mode" style="display:none">Focus</span>
-      </div>
-
       <footer class="footer">
         <p>Nois — every sound is math, every session is unique</p>
       </footer>
