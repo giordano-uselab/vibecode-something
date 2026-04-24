@@ -76,9 +76,9 @@ html, body {
 
 .visualizer-canvas {
   width: 100%;
-  height: 120px;
+  height: 160px;
   border-radius: var(--radius);
-  background: var(--bg-card);
+  background: rgba(10, 10, 15, 0.9);
   border: 1px solid var(--border);
 }
 
