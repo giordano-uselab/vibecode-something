@@ -13,6 +13,7 @@ export class SoundMixer {
   private masterGain: GainNode | null = null;
   private compressor: DynamicsCompressorNode | null = null;
   private boundResumeHandler: (() => void) | null = null;
+  private silentAudio: HTMLAudioElement | null = null;
   private readonly _state: AppState;
 
   constructor(private readonly registry: SoundRegistry) {
@@ -103,6 +104,7 @@ export class SoundMixer {
     generator.setVolume(soundState.volume);
     generator.start();
     soundState.active = true;
+    this.updateMediaSession();
   }
 
   private stopSound(id: string): void {
@@ -114,6 +116,7 @@ export class SoundMixer {
     if (soundState) {
       soundState.active = false;
     }
+    this.updateMediaSession();
   }
 
   setVolume(id: string, volume: number): void {
@@ -160,7 +163,77 @@ export class SoundMixer {
     }
   }
 
+  private wakeLock: WakeLockSentinel | null = null;
+
+  private updateMediaSession(): void {
+    if (!('mediaSession' in navigator)) return;
+
+    const active = this.hasActiveSounds();
+    if (active) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: 'Nois — Ambient Soundscapes',
+        artist: 'Nois',
+        album: 'Ambient Mix',
+      });
+      navigator.mediaSession.playbackState = 'playing';
+
+      // Handlers so lock-screen controls work
+      navigator.mediaSession.setActionHandler('pause', () => this.stopAll());
+      navigator.mediaSession.setActionHandler('play', () => {
+        // Resume audio context if suspended
+        if (this.ctx?.state === 'suspended') {
+          this.ctx.resume().catch(() => {});
+        }
+      });
+
+      this.requestWakeLock();
+      this.startSilentAudio();
+    } else {
+      navigator.mediaSession.playbackState = 'paused';
+      navigator.mediaSession.setActionHandler('pause', null);
+      navigator.mediaSession.setActionHandler('play', null);
+      this.releaseWakeLock();
+      this.stopSilentAudio();
+    }
+  }
+
+  private async requestWakeLock(): Promise<void> {
+    if (this.wakeLock) return;
+    try {
+      if ('wakeLock' in navigator) {
+        this.wakeLock = await navigator.wakeLock.request('screen');
+        this.wakeLock.addEventListener('release', () => { this.wakeLock = null; });
+      }
+    } catch { /* battery saver or not supported */ }
+  }
+
+  private releaseWakeLock(): void {
+    this.wakeLock?.release().catch(() => {});
+    this.wakeLock = null;
+  }
+
+  /** Tiny silent audio loop — keeps iOS/Android from suspending the page when locked */
+  private startSilentAudio(): void {
+    if (this.silentAudio) return;
+    // Minimal valid WAV: 1 sample of silence, looped
+    const silence = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=';
+    this.silentAudio = new Audio(silence);
+    this.silentAudio.loop = true;
+    this.silentAudio.volume = 0.01;
+    this.silentAudio.play().catch(() => {});
+  }
+
+  private stopSilentAudio(): void {
+    if (this.silentAudio) {
+      this.silentAudio.pause();
+      this.silentAudio.src = '';
+      this.silentAudio = null;
+    }
+  }
+
   dispose(): void {
+    this.releaseWakeLock();
+    this.stopSilentAudio();
     if (this.boundResumeHandler) {
       for (const event of ['click', 'touchstart', 'keydown'] as const) {
         document.removeEventListener(event, this.boundResumeHandler);
