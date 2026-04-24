@@ -41,8 +41,8 @@ export class HeavyDownpourGenerator extends BaseSoundGenerator {
 
     this.bandpass = ctx.createBiquadFilter();
     this.bandpass.type = 'bandpass';
-    this.bandpass.frequency.value = 1000;
-    this.bandpass.Q.value = 0.25;
+    this.bandpass.frequency.value = 600;
+    this.bandpass.Q.value = 0.2;
 
     this.mainGain = ctx.createGain();
     this.mainGain.gain.value = 0.25;
