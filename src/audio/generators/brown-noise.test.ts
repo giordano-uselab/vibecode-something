@@ -1,4 +1,4 @@
 import { describeSoundGeneratorContract } from '../../test-utils/sound-generator-contract';
-import { BrownNoiseGenerator } from './brown-noise';
+import { DeepWaterGenerator } from './brown-noise';
 
-describeSoundGeneratorContract('BrownNoiseGenerator', () => new BrownNoiseGenerator());
+describeSoundGeneratorContract('DeepWaterGenerator', () => new DeepWaterGenerator());

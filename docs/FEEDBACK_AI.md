@@ -25,3 +25,6 @@ Observations from the AI side about the vibecoding experience.
 - Vibecoding works best when the human stays in the driver's seat for *what* and *why*.
 - AI should ask before building, not build and then present.
 - Start with the smallest thing that can be experienced (one good sound), not the full architecture.
+- The PO naturally pushed back when they felt out of control. The structured review (9 areas, PO picks order) was the right response — it restores ownership without throwing away work.
+- "Feel free to add feedback without telling me" — trust signal. The working relationship is improving.
+- Building 14 new generators + 1 new soundscape + reworking 2 soundscapes in one batch is a lot of code with no PO listening review. The sounds are technically correct (tests pass) but quality is subjective — PO needs to hear them and judge. This is the next critical step.

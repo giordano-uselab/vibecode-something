@@ -7,9 +7,9 @@ import { BaseSoundGenerator } from '../base-generator';
  * Technique: White noise → bandpass (200-800Hz) + random short gain bursts
  * to simulate crackling + low-frequency rumble for the "body" of the fire.
  */
-export class FireGenerator extends BaseSoundGenerator {
-  readonly id = 'fire';
-  readonly name = 'Fire';
+export class CracklingFireGenerator extends BaseSoundGenerator {
+  readonly id = 'crackling-fire';
+  readonly name = 'Crackling Fire';
   readonly category: SoundCategory = 'basic';
 
   private noiseSource: AudioBufferSourceNode | null = null;

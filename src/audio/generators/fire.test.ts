@@ -1,4 +1,4 @@
 import { describeSoundGeneratorContract } from '../../test-utils/sound-generator-contract';
-import { FireGenerator } from './fire';
+import { CracklingFireGenerator } from './fire';
 
-describeSoundGeneratorContract('FireGenerator', () => new FireGenerator());
+describeSoundGeneratorContract('CracklingFireGenerator', () => new CracklingFireGenerator());

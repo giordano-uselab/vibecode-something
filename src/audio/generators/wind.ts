@@ -7,9 +7,9 @@ import { BaseSoundGenerator } from '../base-generator';
  * Technique: White noise → lowpass filter with slow LFO modulating
  * the cutoff frequency (0.5kHz–2kHz sweep) to create howling wind.
  */
-export class WindGenerator extends BaseSoundGenerator {
-  readonly id = 'wind';
-  readonly name = 'Wind';
+export class GentleBreezeGenerator extends BaseSoundGenerator {
+  readonly id = 'gentle-breeze';
+  readonly name = 'Gentle Breeze';
   readonly category: SoundCategory = 'basic';
 
   private noiseSource: AudioBufferSourceNode | null = null;

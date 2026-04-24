@@ -1,4 +1,4 @@
 import { describeSoundGeneratorContract } from '../../test-utils/sound-generator-contract';
-import { WhiteNoiseGenerator } from './white-noise';
+import { DeepSpaceGenerator } from './white-noise';
 
-describeSoundGeneratorContract('WhiteNoiseGenerator', () => new WhiteNoiseGenerator());
+describeSoundGeneratorContract('DeepSpaceGenerator', () => new DeepSpaceGenerator());

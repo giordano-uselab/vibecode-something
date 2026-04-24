@@ -7,9 +7,9 @@ import { BaseSoundGenerator } from '../base-generator';
  * Technique: White noise buffer → bandpass filter (1kHz–5kHz)
  * with randomized gain impulses simulating individual raindrops.
  */
-export class RainGenerator extends BaseSoundGenerator {
-  readonly id = 'rain';
-  readonly name = 'Rain';
+export class SteadyRainGenerator extends BaseSoundGenerator {
+  readonly id = 'steady-rain';
+  readonly name = 'Steady Rain';
   readonly category: SoundCategory = 'basic';
 
   private noiseSource: AudioBufferSourceNode | null = null;

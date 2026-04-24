@@ -1,4 +1,4 @@
 import { describeSoundGeneratorContract } from '../../test-utils/sound-generator-contract';
-import { RainGenerator } from './rain';
+import { SteadyRainGenerator } from './rain';
 
-describeSoundGeneratorContract('RainGenerator', () => new RainGenerator());
+describeSoundGeneratorContract('SteadyRainGenerator', () => new SteadyRainGenerator());

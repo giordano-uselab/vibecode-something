@@ -31,26 +31,65 @@ Every work session follows this cycle:
 ## Current State (April 2026)
 
 ### Done
-- 6 sound generators: rain, wind, fire, coffee shop, white noise, brown noise
-- 2 soundscapes: Roman Piazza, Ancient Kyoto
+- 20 sound generators: Light Drizzle, Steady Rain, Heavy Downpour, Thunderstorm, Gentle Breeze, Forest Wind, Coastal Wind, Crackling Fire, Flowing River, Ocean Waves, Rustling Leaves, Birds at Dawn, Crickets & Night, Coffee Shop, Horse Hooves, Crowd Murmur, Train Journey, Deep Space, Deep Water, Tibetan Bowl
+- 3 soundscapes: Roman Piazza (reworked), Ancient Kyoto (reworked), Amsterdam Canal (new)
 - Sound mixer with per-sound and master volume
 - Canvas particle visualizer
-- Pomodoro timer logic (no UI integration)
+- Pomodoro timer logic (no UI integration — parked)
 - Preset save/load to localStorage (no UI list)
-- 9 unit tests (generators + timer)
+- 24 test files, 284 tests passing
 - Basic HTML/CSS UI with sound cards
 
 ### Not Done
-- Pomodoro UI
+- Sound quality review (PO needs to listen to each sound and give feedback)
+- UI review and rework
 - Preset UI (list, load, delete)
 - PWA service worker / offline
 - Premium tier / paywall
-- Sound quality review (user flagged some sounds as not good enough)
-- Feature review (deferred — needs proper discussion)
+- 3 more soundscapes planned: African Savanna, Parisian Café, Viking Coast
+
+## Decisions Made (April 24)
+
+### Product Vision — CONFIRMED
+- **What:** Ambient sound mixer with general sounds + location-based soundscape presets (Amsterdam, Ancient Rome, etc.)
+- **Name:** Nois — keep it. Play on "Nice" in the UI.
+- **Differentiator:** All sounds generated with math, no audio files. Game changer.
+- **Target:** Demo for tech chapter, but built for real users too.
+- **Platforms:** Desktop + mobile (Android + iPhone). Must be deployed and accessible.
+- **Priority order:** Define features → fix sounds → fix UI.
+
+### Review Progress
+- [x] 1. Product vision
+- [ ] 2. Sound selection — DONE (see confirmed lists below)
+- [ ] 3. UX / interaction design
+- [ ] 4. Visual design
+- [x] 5. Features & priorities — sounds and soundscapes confirmed
+- [ ] 6. Technical design
+- [ ] 7. Testing strategy
+- [ ] 8. Deployment
+- [ ] 9. Monetization
+
+### Confirmed Sounds (20 total)
+
+**Rain (4):** Light Drizzle, Steady Rain, Heavy Downpour, Thunderstorm
+**Wind (3):** Gentle Breeze, Forest Wind, Coastal Wind
+**Nature (6):** Crackling Fire, Flowing River, Ocean Waves, Rustling Leaves, Birds at Dawn, Crickets & Night
+**Urban (4):** Coffee Shop, Horse Hooves, Crowd Murmur, Train Journey
+**Focus (3):** Deep Space, Deep Water, Tibetan Bowl
+
+### Confirmed Soundscapes (6 total, 3 for today)
+
+**Today:** Roman Piazza (reworked), Ancient Kyoto (reworked), Amsterdam Canal (new)
+**Later:** African Savanna, Parisian Café, Viking Coast
+
+### Parked Features
+- Pomodoro timer — deferred, revisit later
+- I/J/K/L (PWA, offline, paywall, packs) — not discussed yet
 
 ## Open Decisions (Pending Human Input)
 
-1. **Sound quality review** — Go through each sound, decide what to keep/change/cut.
-2. **Feature scope** — Which features matter, in what order. Deferred for proper review.
-3. **Monetization model** — Product spec mentions $3.99 one-time, but not confirmed by PO.
-4. **Sound selection** — Current 6+2 lineup not confirmed by PO.
+1. **Feature scope** — Which features to include, what's MVP, what's cut.
+2. **Sound quality review** — Go through each sound, decide what to keep/change/cut.
+3. **UI review** — Look, feel, layout.
+4. **Monetization model** — Not yet discussed.
+5. **Soundscape selection** — Which locations/presets to include.
