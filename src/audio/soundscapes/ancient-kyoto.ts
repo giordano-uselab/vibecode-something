@@ -16,12 +16,14 @@ export class AncientKyotoGenerator extends BaseSoundGenerator {
 
   private windSource: AudioBufferSourceNode | null = null;
   private windFilter: BiquadFilterNode | null = null;
+  private windVolume: GainNode | null = null;
   private windLfo: OscillatorNode | null = null;
   private windLfoGain: GainNode | null = null;
   private cricketOsc: OscillatorNode | null = null;
   private cricketLfo: OscillatorNode | null = null;
   private cricketLfoGain: GainNode | null = null;
   private cricketGain: GainNode | null = null;
+  private cricketOutGain: GainNode | null = null;
   private bellInterval: ReturnType<typeof setInterval> | null = null;
   private dripInterval: ReturnType<typeof setInterval> | null = null;
   private fluteInterval: ReturnType<typeof setInterval> | null = null;
@@ -51,14 +53,14 @@ export class AncientKyotoGenerator extends BaseSoundGenerator {
     this.windLfo.connect(this.windLfoGain);
     this.windLfoGain.connect(this.windFilter.frequency);
 
-    const windGain = ctx.createGain();
-    windGain.gain.value = 0.08;
+    this.windVolume = ctx.createGain();
+    this.windVolume.gain.value = 0.08;
 
     this.windSource.connect(this.windFilter);
-    this.windFilter.connect(windGain);
-    windGain.connect(output);
+    this.windFilter.connect(this.windVolume);
+    this.windVolume.connect(output);
 
-    this.windSource.start();
+    this.startLoopingSource(this.windSource);
     this.windLfo.start();
 
     // Layer 2: Crickets — high-frequency AM-modulated sine
@@ -79,12 +81,12 @@ export class AncientKyotoGenerator extends BaseSoundGenerator {
     this.cricketLfo.connect(this.cricketLfoGain);
     this.cricketLfoGain.connect(this.cricketGain.gain);
 
-    const cricketOut = ctx.createGain();
-    cricketOut.gain.value = 0.008;
+    this.cricketOutGain = ctx.createGain();
+    this.cricketOutGain.gain.value = 0.008;
 
     this.cricketOsc.connect(this.cricketGain);
-    this.cricketGain.connect(cricketOut);
-    cricketOut.connect(output);
+    this.cricketGain.connect(this.cricketOutGain);
+    this.cricketOutGain.connect(output);
 
     this.cricketOsc.start();
     this.cricketLfo.start();
@@ -260,15 +262,20 @@ export class AncientKyotoGenerator extends BaseSoundGenerator {
     this.cricketLfo = null;
     this.windLfo = null;
 
+    if (this.windSource) {
+      this.windSource.onended = null;
+    }
     this.stopSource(this.windSource);
     this.windSource = null;
 
-    for (const node of [this.windFilter, this.windLfoGain, this.cricketLfoGain, this.cricketGain]) {
+    for (const node of [this.windFilter, this.windLfoGain, this.windVolume, this.cricketLfoGain, this.cricketGain, this.cricketOutGain]) {
       if (node) node.disconnect();
     }
     this.windFilter = null;
     this.windLfoGain = null;
+    this.windVolume = null;
     this.cricketLfoGain = null;
     this.cricketGain = null;
+    this.cricketOutGain = null;
   }
 }

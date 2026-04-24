@@ -17,6 +17,7 @@ export class FireGenerator extends BaseSoundGenerator {
   private crackleGain: GainNode | null = null;
   private rumbleSource: AudioBufferSourceNode | null = null;
   private rumbleFilter: BiquadFilterNode | null = null;
+  private rumbleGain: GainNode | null = null;
   private crackleInterval: ReturnType<typeof setInterval> | null = null;
 
   protected buildAudioGraph(ctx: AudioContext, output: GainNode): void {
@@ -53,15 +54,15 @@ export class FireGenerator extends BaseSoundGenerator {
     this.rumbleFilter.type = 'lowpass';
     this.rumbleFilter.frequency.value = 150;
 
-    const rumbleGain = ctx.createGain();
-    rumbleGain.gain.value = 0.08;
+    this.rumbleGain = ctx.createGain();
+    this.rumbleGain.gain.value = 0.08;
 
     this.rumbleSource.connect(this.rumbleFilter);
-    this.rumbleFilter.connect(rumbleGain);
-    rumbleGain.connect(output);
+    this.rumbleFilter.connect(this.rumbleGain);
+    this.rumbleGain.connect(output);
 
-    this.noiseSource.start();
-    this.rumbleSource.start();
+    this.startLoopingSource(this.noiseSource);
+    this.startLoopingSource(this.rumbleSource);
 
     // Random crackle bursts
     this.crackleInterval = setInterval(() => {
@@ -83,6 +84,7 @@ export class FireGenerator extends BaseSoundGenerator {
     }
     for (const source of [this.noiseSource, this.rumbleSource]) {
       if (source) {
+        source.onended = null;
         try { source.stop(); } catch { /* already stopped */ }
         source.disconnect();
       }
@@ -90,11 +92,12 @@ export class FireGenerator extends BaseSoundGenerator {
     this.noiseSource = null;
     this.rumbleSource = null;
 
-    for (const node of [this.bandpass, this.rumbleFilter, this.crackleGain]) {
+    for (const node of [this.bandpass, this.rumbleFilter, this.crackleGain, this.rumbleGain]) {
       if (node) node.disconnect();
     }
     this.bandpass = null;
     this.rumbleFilter = null;
     this.crackleGain = null;
+    this.rumbleGain = null;
   }
 }

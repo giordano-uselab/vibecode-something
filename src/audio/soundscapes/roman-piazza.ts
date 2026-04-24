@@ -19,8 +19,10 @@ export class RomanPiazzaGenerator extends BaseSoundGenerator {
 
   private fountainSource: AudioBufferSourceNode | null = null;
   private fountainFilter: BiquadFilterNode | null = null;
+  private fountainGain: GainNode | null = null;
   private chatterSource: AudioBufferSourceNode | null = null;
   private chatterFilter: BiquadFilterNode | null = null;
+  private chatterGain: GainNode | null = null;
   private bellInterval: ReturnType<typeof setInterval> | null = null;
   private stepInterval: ReturnType<typeof setInterval> | null = null;
   private pigeonInterval: ReturnType<typeof setInterval> | null = null;
@@ -40,13 +42,13 @@ export class RomanPiazzaGenerator extends BaseSoundGenerator {
     this.fountainFilter.frequency.value = 4000;
     this.fountainFilter.Q.value = 0.3;
 
-    const fountainGain = ctx.createGain();
-    fountainGain.gain.value = 0.12;
+    this.fountainGain = ctx.createGain();
+    this.fountainGain.gain.value = 0.12;
 
     this.fountainSource.connect(this.fountainFilter);
-    this.fountainFilter.connect(fountainGain);
-    fountainGain.connect(output);
-    this.fountainSource.start();
+    this.fountainFilter.connect(this.fountainGain);
+    this.fountainGain.connect(output);
+    this.startLoopingSource(this.fountainSource);
 
     // Layer 2: Distant chatter — very low, shaped pink noise
     this.chatterSource = ctx.createBufferSource();
@@ -58,13 +60,13 @@ export class RomanPiazzaGenerator extends BaseSoundGenerator {
     this.chatterFilter.frequency.value = 600;
     this.chatterFilter.Q.value = 1;
 
-    const chatterGain = ctx.createGain();
-    chatterGain.gain.value = 0.04;
+    this.chatterGain = ctx.createGain();
+    this.chatterGain.gain.value = 0.04;
 
     this.chatterSource.connect(this.chatterFilter);
-    this.chatterFilter.connect(chatterGain);
-    chatterGain.connect(output);
-    this.chatterSource.start();
+    this.chatterFilter.connect(this.chatterGain);
+    this.chatterGain.connect(output);
+    this.startLoopingSource(this.chatterSource);
 
     // Layer 3: Church bells — every 8-15 seconds
     this.bellInterval = setInterval(() => {
@@ -214,6 +216,7 @@ export class RomanPiazzaGenerator extends BaseSoundGenerator {
 
     for (const source of [this.fountainSource, this.chatterSource]) {
       if (source) {
+        source.onended = null;
         try { source.stop(); } catch { /* already stopped */ }
         source.disconnect();
       }
@@ -221,10 +224,12 @@ export class RomanPiazzaGenerator extends BaseSoundGenerator {
     this.fountainSource = null;
     this.chatterSource = null;
 
-    for (const node of [this.fountainFilter, this.chatterFilter]) {
+    for (const node of [this.fountainFilter, this.chatterFilter, this.fountainGain, this.chatterGain]) {
       if (node) node.disconnect();
     }
     this.fountainFilter = null;
     this.chatterFilter = null;
+    this.fountainGain = null;
+    this.chatterGain = null;
   }
 }

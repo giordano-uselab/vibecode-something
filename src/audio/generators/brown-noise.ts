@@ -41,11 +41,12 @@ export class BrownNoiseGenerator extends BaseSoundGenerator {
 
     this.source.connect(this.filter);
     this.filter.connect(output);
-    this.source.start();
+    this.startLoopingSource(this.source);
   }
 
   protected teardownAudioGraph(): void {
     if (this.source) {
+      this.source.onended = null;
       try { this.source.stop(); } catch { /* already stopped */ }
       this.source.disconnect();
       this.source = null;

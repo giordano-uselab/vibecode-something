@@ -16,8 +16,8 @@ export abstract class BaseSoundGenerator implements SoundGenerator {
   protected destination: AudioNode | null = null;
   protected gainNode: GainNode | null = null;
   private _volume = 0;
-  private _playing = false;
-  private _disposed = false;
+  protected _playing = false;
+  protected _disposed = false;
 
   connect(ctx: AudioContext, destination: AudioNode): void {
     this.ctx = ctx;
@@ -76,4 +76,19 @@ export abstract class BaseSoundGenerator implements SoundGenerator {
    * Override in subclasses to clean up oscillators, buffers, etc.
    */
   protected abstract teardownAudioGraph(): void;
+
+  /**
+   * Start a buffer source with loop=true and auto-restart on unexpected end.
+   * Guards against browsers that fail to loop AudioBufferSourceNode.
+   */
+  protected startLoopingSource(source: AudioBufferSourceNode): void {
+    source.loop = true;
+    source.onended = () => {
+      if (this._playing && !this._disposed && this.ctx && this.gainNode) {
+        this.teardownAudioGraph();
+        this.buildAudioGraph(this.ctx, this.gainNode);
+      }
+    };
+    source.start();
+  }
 }

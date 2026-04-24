@@ -12,6 +12,7 @@ export class SoundMixer {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private compressor: DynamicsCompressorNode | null = null;
+  private boundResumeHandler: (() => void) | null = null;
   private readonly _state: AppState;
 
   constructor(private readonly registry: SoundRegistry) {
@@ -52,6 +53,23 @@ export class SoundMixer {
       this.masterGain = this.ctx.createGain();
       this.masterGain.gain.value = this._state.masterVolume;
       this.masterGain.connect(this.compressor);
+
+      // Auto-resume if browser suspends the context
+      this.ctx.addEventListener('statechange', () => {
+        if (this.ctx?.state === 'suspended') {
+          this.ctx.resume().catch(() => {});
+        }
+      });
+
+      // Resume on any user gesture (handles strict autoplay policies)
+      this.boundResumeHandler = () => {
+        if (this.ctx?.state === 'suspended') {
+          this.ctx.resume().catch(() => {});
+        }
+      };
+      for (const event of ['click', 'touchstart', 'keydown'] as const) {
+        document.addEventListener(event, this.boundResumeHandler, { passive: true });
+      }
     }
     const master = this.masterGain ?? this.ctx.createGain();
     return { ctx: this.ctx, master };
@@ -144,6 +162,12 @@ export class SoundMixer {
   }
 
   dispose(): void {
+    if (this.boundResumeHandler) {
+      for (const event of ['click', 'touchstart', 'keydown'] as const) {
+        document.removeEventListener(event, this.boundResumeHandler);
+      }
+      this.boundResumeHandler = null;
+    }
     for (const [, generator] of this.generators) {
       generator.dispose();
     }

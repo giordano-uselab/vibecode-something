@@ -15,6 +15,7 @@ export class CoffeeShopGenerator extends BaseSoundGenerator {
 
   private murmurSource: AudioBufferSourceNode | null = null;
   private murmurFilter: BiquadFilterNode | null = null;
+  private murmurGain: GainNode | null = null;
   private clinkInterval: ReturnType<typeof setInterval> | null = null;
   private activeOscillators: OscillatorNode[] = [];
 
@@ -46,14 +47,14 @@ export class CoffeeShopGenerator extends BaseSoundGenerator {
     this.murmurFilter.type = 'lowpass';
     this.murmurFilter.frequency.value = 800;
 
-    const murmurGain = ctx.createGain();
-    murmurGain.gain.value = 0.15;
+    this.murmurGain = ctx.createGain();
+    this.murmurGain.gain.value = 0.15;
 
     this.murmurSource.connect(this.murmurFilter);
-    this.murmurFilter.connect(murmurGain);
-    murmurGain.connect(output);
+    this.murmurFilter.connect(this.murmurGain);
+    this.murmurGain.connect(output);
 
-    this.murmurSource.start();
+    this.startLoopingSource(this.murmurSource);
 
     // Random clinks — short high-frequency sine bursts
     this.clinkInterval = setInterval(() => {
@@ -95,6 +96,7 @@ export class CoffeeShopGenerator extends BaseSoundGenerator {
     this.activeOscillators = [];
 
     if (this.murmurSource) {
+      this.murmurSource.onended = null;
       try { this.murmurSource.stop(); } catch { /* already stopped */ }
       this.murmurSource.disconnect();
       this.murmurSource = null;
@@ -102,6 +104,10 @@ export class CoffeeShopGenerator extends BaseSoundGenerator {
     if (this.murmurFilter) {
       this.murmurFilter.disconnect();
       this.murmurFilter = null;
+    }
+    if (this.murmurGain) {
+      this.murmurGain.disconnect();
+      this.murmurGain = null;
     }
   }
 }

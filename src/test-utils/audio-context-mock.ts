@@ -14,6 +14,7 @@ export function createMockAudioContext(): AudioContext {
     disconnect: () => {},
     start: () => {},
     stop: () => {},
+    onended: null as ((ev: Event) => void) | null,
     type: 'lowpass',
     frequency: { value: 0, setValueAtTime: () => {}, linearRampToValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} },
     Q: { value: 0, setValueAtTime: () => {} },

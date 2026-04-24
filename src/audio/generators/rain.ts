@@ -46,7 +46,7 @@ export class RainGenerator extends BaseSoundGenerator {
     this.filter.connect(this.dropGain);
     this.dropGain.connect(output);
 
-    this.noiseSource.start();
+    this.startLoopingSource(this.noiseSource);
 
     // Simulate random raindrop intensity variations
     this.dropInterval = setInterval(() => {
@@ -67,6 +67,7 @@ export class RainGenerator extends BaseSoundGenerator {
       this.dropInterval = null;
     }
     if (this.noiseSource) {
+      this.noiseSource.onended = null;
       try { this.noiseSource.stop(); } catch { /* already stopped */ }
       this.noiseSource.disconnect();
       this.noiseSource = null;

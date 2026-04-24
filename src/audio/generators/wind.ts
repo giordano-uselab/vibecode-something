@@ -49,7 +49,7 @@ export class WindGenerator extends BaseSoundGenerator {
     this.noiseSource.connect(this.filter);
     this.filter.connect(output);
 
-    this.noiseSource.start();
+    this.startLoopingSource(this.noiseSource);
     this.lfo.start();
   }
 
@@ -64,6 +64,7 @@ export class WindGenerator extends BaseSoundGenerator {
       this.lfoGain = null;
     }
     if (this.noiseSource) {
+      this.noiseSource.onended = null;
       try { this.noiseSource.stop(); } catch { /* already stopped */ }
       this.noiseSource.disconnect();
       this.noiseSource = null;
