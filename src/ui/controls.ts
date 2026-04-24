@@ -72,7 +72,10 @@ export class Controls {
       <div class="sound-card ${isActive ? 'active' : ''}" data-sound-id="${meta.id}">
         <div class="sound-card__header">
           <span class="sound-card__icon">${meta.icon}</span>
-          <span class="sound-card__name">${meta.name}</span>
+          <div class="sound-card__info">
+            <span class="sound-card__name">${meta.name}</span>
+            <span class="sound-card__desc">${meta.description}</span>
+          </div>
           <span class="sound-card__status">${isActive ? 'ON' : 'OFF'}</span>
         </div>
         <input type="range" class="volume-slider" data-volume-id="${meta.id}"
