@@ -2,10 +2,10 @@ import type { SoundCategory } from '../../types';
 import { BaseSoundGenerator } from '../base-generator';
 
 /**
- * Forest Wind — wind through trees with rustling leaves texture.
+ * Forest Wind — wind moving through dense trees.
  *
- * Technique: Bandpass noise with slow LFO sweep + highpass noise layer
- * for leaf rustle with randomized gain modulation.
+ * Technique: Low bandpass noise for wind body with gentle sweep +
+ * high-frequency filtered bursts for leaf texture. No rain.
  */
 export class ForestWindGenerator extends BaseSoundGenerator {
   readonly id = 'forest-wind';
@@ -31,24 +31,24 @@ export class ForestWindGenerator extends BaseSoundGenerator {
       data[i] = Math.random() * 2 - 1;
     }
 
-    // Wind body — bandpass with slow sweep
+    // Wind body — low bandpass, airy, not rainy
     this.windSource = ctx.createBufferSource();
     this.windSource.buffer = buffer;
     this.windSource.loop = true;
 
     this.windFilter = ctx.createBiquadFilter();
-    this.windFilter.type = 'bandpass';
-    this.windFilter.frequency.value = 600;
-    this.windFilter.Q.value = 0.8;
+    this.windFilter.type = 'lowpass';
+    this.windFilter.frequency.value = 350;
+    this.windFilter.Q.value = 0.3;
 
     this.windGain = ctx.createGain();
-    this.windGain.gain.value = 0.12;
+    this.windGain.gain.value = 0.10;
 
     this.lfo = ctx.createOscillator();
     this.lfo.type = 'sine';
-    this.lfo.frequency.value = 0.08;
+    this.lfo.frequency.value = 0.06 + Math.random() * 0.03;
     this.lfoGain = ctx.createGain();
-    this.lfoGain.gain.value = 300;
+    this.lfoGain.gain.value = 120;
     this.lfo.connect(this.lfoGain);
     this.lfoGain.connect(this.windFilter.frequency);
 
@@ -58,7 +58,7 @@ export class ForestWindGenerator extends BaseSoundGenerator {
     this.startLoopingSource(this.windSource);
     this.lfo.start();
 
-    // Rustle layer — highpass noise with faster modulation
+    // Leaf rustle layer — very soft highpass texture
     const rustleBuf = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const rustleData = rustleBuf.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
@@ -70,17 +70,18 @@ export class ForestWindGenerator extends BaseSoundGenerator {
     this.rustleSource.loop = true;
 
     this.rustleFilter = ctx.createBiquadFilter();
-    this.rustleFilter.type = 'highpass';
-    this.rustleFilter.frequency.value = 4000;
+    this.rustleFilter.type = 'bandpass';
+    this.rustleFilter.frequency.value = 6000;
+    this.rustleFilter.Q.value = 0.3;
 
     this.rustleGain = ctx.createGain();
-    this.rustleGain.gain.value = 0.03;
+    this.rustleGain.gain.value = 0.015;
 
     this.rustleLfo = ctx.createOscillator();
     this.rustleLfo.type = 'sine';
-    this.rustleLfo.frequency.value = 0.3;
+    this.rustleLfo.frequency.value = 0.2 + Math.random() * 0.15;
     this.rustleLfoGain = ctx.createGain();
-    this.rustleLfoGain.gain.value = 0.02;
+    this.rustleLfoGain.gain.value = 0.012;
     this.rustleLfo.connect(this.rustleLfoGain);
     this.rustleLfoGain.connect(this.rustleGain.gain);
 

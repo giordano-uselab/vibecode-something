@@ -2,11 +2,11 @@ import type { SoundCategory } from '../../types';
 import { BaseSoundGenerator } from '../base-generator';
 
 /**
- * Coffee shop ambient sound generator.
+ * Coffee shop ambient sound generator — indoor cafe.
  *
- * Technique: Pink noise (low level) for background murmur +
- * random impulse "clinks" (high sine bursts) for cup/glass sounds +
- * muffled conversation layer (shaped noise).
+ * Technique: Heavily muffled pink noise for enclosed room murmur +
+ * occasional cup clinks (high sine bursts through lowpass for
+ * indoor damping) + a low rumble layer for room/HVAC presence.
  */
 export class CoffeeShopGenerator extends BaseSoundGenerator {
   readonly id = 'coffee-shop';
@@ -16,16 +16,20 @@ export class CoffeeShopGenerator extends BaseSoundGenerator {
   private murmurSource: AudioBufferSourceNode | null = null;
   private murmurFilter: BiquadFilterNode | null = null;
   private murmurGain: GainNode | null = null;
-  private clinkInterval: ReturnType<typeof setInterval> | null = null;
+  private roomSource: AudioBufferSourceNode | null = null;
+  private roomFilter: BiquadFilterNode | null = null;
+  private roomGain: GainNode | null = null;
+  private clinkTimeout: ReturnType<typeof setTimeout> | null = null;
   private activeOscillators: OscillatorNode[] = [];
+  private stopped = false;
 
   protected buildAudioGraph(ctx: AudioContext, output: GainNode): void {
-    // Background murmur: pink-ish noise (lowpassed white noise)
+    // Background murmur: pink-ish noise, heavily lowpassed for indoor feel
     const bufferSize = ctx.sampleRate * 2;
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);
 
-    // Simple pink noise approximation using Paul Kellet's algorithm
+    // Pink noise approximation (Paul Kellet's algorithm)
     let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
     for (let i = 0; i < bufferSize; i++) {
       const white = Math.random() * 2 - 1;
@@ -43,51 +47,95 @@ export class CoffeeShopGenerator extends BaseSoundGenerator {
     this.murmurSource.buffer = buffer;
     this.murmurSource.loop = true;
 
+    // Very low cutoff for muffled, enclosed sound
     this.murmurFilter = ctx.createBiquadFilter();
     this.murmurFilter.type = 'lowpass';
-    this.murmurFilter.frequency.value = 800;
+    this.murmurFilter.frequency.value = 500;
+    this.murmurFilter.Q.value = 0.5;
 
     this.murmurGain = ctx.createGain();
-    this.murmurGain.gain.value = 0.15;
+    this.murmurGain.gain.value = 0.18;
 
     this.murmurSource.connect(this.murmurFilter);
     this.murmurFilter.connect(this.murmurGain);
     this.murmurGain.connect(output);
-
     this.startLoopingSource(this.murmurSource);
 
-    // Random clinks — short high-frequency sine bursts
-    this.clinkInterval = setInterval(() => {
-      if (ctx.state !== 'running') return;
+    // Room presence — low rumble (HVAC, room tone)
+    const roomBuf = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const roomData = roomBuf.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      roomData[i] = Math.random() * 2 - 1;
+    }
 
-      const osc = ctx.createOscillator();
-      const clinkGain = ctx.createGain();
+    this.roomSource = ctx.createBufferSource();
+    this.roomSource.buffer = roomBuf;
+    this.roomSource.loop = true;
 
-      osc.type = 'sine';
-      osc.frequency.value = 2000 + Math.random() * 3000;
+    this.roomFilter = ctx.createBiquadFilter();
+    this.roomFilter.type = 'lowpass';
+    this.roomFilter.frequency.value = 120;
 
-      clinkGain.gain.setValueAtTime(0.01 + Math.random() * 0.02, ctx.currentTime);
-      clinkGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+    this.roomGain = ctx.createGain();
+    this.roomGain.gain.value = 0.06;
 
-      osc.connect(clinkGain);
-      clinkGain.connect(output);
+    this.roomSource.connect(this.roomFilter);
+    this.roomFilter.connect(this.roomGain);
+    this.roomGain.connect(output);
+    this.startLoopingSource(this.roomSource);
 
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.1);
+    // Random clinks — muffled for indoor
+    this.stopped = false;
+    this.scheduleClink(ctx, output);
+  }
 
-      this.activeOscillators.push(osc);
-      osc.onended = () => {
-        osc.disconnect();
-        clinkGain.disconnect();
-        this.activeOscillators = this.activeOscillators.filter((o) => o !== osc);
-      };
-    }, 800 + Math.random() * 2000);
+  private scheduleClink(ctx: AudioContext, output: GainNode): void {
+    if (this.stopped) return;
+    const delay = 1500 + Math.random() * 3000;
+    this.clinkTimeout = setTimeout(() => {
+      if (this.stopped || ctx.state !== 'running') return;
+      this.playClink(ctx, output);
+      this.scheduleClink(ctx, output);
+    }, delay);
+  }
+
+  private playClink(ctx: AudioContext, output: GainNode): void {
+    const osc = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
+    const clinkGain = ctx.createGain();
+
+    osc.type = 'sine';
+    // Indoor clinks — slightly lower and damped
+    osc.frequency.value = 1500 + Math.random() * 2000;
+
+    // Lowpass to muffle the clink (indoor)
+    filter.type = 'lowpass';
+    filter.frequency.value = 3000 + Math.random() * 1000;
+
+    clinkGain.gain.setValueAtTime(0.008 + Math.random() * 0.012, ctx.currentTime);
+    clinkGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.06 + Math.random() * 0.04);
+
+    osc.connect(filter);
+    filter.connect(clinkGain);
+    clinkGain.connect(output);
+
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.12);
+
+    this.activeOscillators.push(osc);
+    osc.onended = () => {
+      osc.disconnect();
+      filter.disconnect();
+      clinkGain.disconnect();
+      this.activeOscillators = this.activeOscillators.filter((o) => o !== osc);
+    };
   }
 
   protected teardownAudioGraph(): void {
-    if (this.clinkInterval) {
-      clearInterval(this.clinkInterval);
-      this.clinkInterval = null;
+    this.stopped = true;
+    if (this.clinkTimeout) {
+      clearTimeout(this.clinkTimeout);
+      this.clinkTimeout = null;
     }
     for (const osc of this.activeOscillators) {
       try { osc.stop(); } catch { /* already stopped */ }
@@ -95,19 +143,21 @@ export class CoffeeShopGenerator extends BaseSoundGenerator {
     }
     this.activeOscillators = [];
 
-    if (this.murmurSource) {
-      this.murmurSource.onended = null;
-      try { this.murmurSource.stop(); } catch { /* already stopped */ }
-      this.murmurSource.disconnect();
-      this.murmurSource = null;
+    for (const src of [this.murmurSource, this.roomSource]) {
+      if (src) {
+        src.onended = null;
+        try { src.stop(); } catch { /* already stopped */ }
+        src.disconnect();
+      }
     }
-    if (this.murmurFilter) {
-      this.murmurFilter.disconnect();
-      this.murmurFilter = null;
+    this.murmurSource = null;
+    this.roomSource = null;
+    for (const node of [this.murmurFilter, this.murmurGain, this.roomFilter, this.roomGain]) {
+      if (node) node.disconnect();
     }
-    if (this.murmurGain) {
-      this.murmurGain.disconnect();
-      this.murmurGain = null;
-    }
+    this.murmurFilter = null;
+    this.murmurGain = null;
+    this.roomFilter = null;
+    this.roomGain = null;
   }
 }

@@ -4,7 +4,7 @@
  */
 export function createMockAudioContext(): AudioContext {
   const gainNode = {
-    gain: { value: 1, setValueAtTime: () => {}, linearRampToValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} },
+    gain: { value: 1, setValueAtTime: () => {}, linearRampToValueAtTime: () => {}, exponentialRampToValueAtTime: () => {}, cancelScheduledValues: () => {} },
     connect: () => gainNode,
     disconnect: () => {},
   };
@@ -16,7 +16,7 @@ export function createMockAudioContext(): AudioContext {
     stop: () => {},
     onended: null as ((ev: Event) => void) | null,
     type: 'lowpass',
-    frequency: { value: 0, setValueAtTime: () => {}, linearRampToValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} },
+    frequency: { value: 0, setValueAtTime: () => {}, linearRampToValueAtTime: () => {}, exponentialRampToValueAtTime: () => {}, cancelScheduledValues: () => {} },
     Q: { value: 0, setValueAtTime: () => {} },
     buffer: null,
     loop: false,
