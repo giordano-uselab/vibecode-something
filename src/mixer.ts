@@ -13,6 +13,7 @@ export class SoundMixer {
   private masterGain: GainNode | null = null;
   private compressor: DynamicsCompressorNode | null = null;
   private boundResumeHandler: (() => void) | null = null;
+  private wakeLock: WakeLockSentinel | null = null;
   private readonly _state: AppState;
 
   constructor(private readonly registry: SoundRegistry) {
@@ -180,14 +181,33 @@ export class SoundMixer {
           this.ctx.resume().catch(() => {});
         }
       });
+
+      this.requestWakeLock();
     } else {
       navigator.mediaSession.playbackState = 'paused';
       navigator.mediaSession.setActionHandler('pause', null);
       navigator.mediaSession.setActionHandler('play', null);
+      this.releaseWakeLock();
     }
   }
 
+  private async requestWakeLock(): Promise<void> {
+    if (this.wakeLock) return;
+    try {
+      if ('wakeLock' in navigator) {
+        this.wakeLock = await navigator.wakeLock.request('screen');
+        this.wakeLock.addEventListener('release', () => { this.wakeLock = null; });
+      }
+    } catch { /* not supported or battery saver */ }
+  }
+
+  private releaseWakeLock(): void {
+    this.wakeLock?.release().catch(() => {});
+    this.wakeLock = null;
+  }
+
   dispose(): void {
+    this.releaseWakeLock();
     if (this.boundResumeHandler) {
       for (const event of ['click', 'touchstart', 'keydown'] as const) {
         document.removeEventListener(event, this.boundResumeHandler);
