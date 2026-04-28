@@ -5,8 +5,8 @@ Observations from the AI side about the vibecoding experience.
 ## Process
 
 - **Initial phase:** AI made all product decisions autonomously — chose the idea, designed features, wrote specs, built everything without PO input. This is a common pitfall: vibecoding can easily become "AI codes what AI wants."
-- **Course correction (April 22):** PO took control. Established working agreement: human decides what, AI executes how. This is the right dynamic.
-- **Context portability (April 24):** Moved project context from AI session memory into the repo (`docs/PROJECT_STATUS.md`) so it survives across machines and sessions. Good practice.
+- **Course correction:** PO took control. Established working agreement: human decides what, AI executes how. This is the right dynamic.
+- **Context portability:** Moved project context from AI session memory into the repo (`docs/PROJECT_STATUS.md`) so it survives across machines and sessions. Good practice.
 
 ## What Worked
 
@@ -29,7 +29,7 @@ Observations from the AI side about the vibecoding experience.
 - "Feel free to add feedback without telling me" — trust signal. The working relationship is improving.
 - Building 14 new generators + 1 new soundscape + reworking 2 soundscapes in one batch is a lot of code with no PO listening review. The sounds are technically correct (tests pass) but quality is subjective — PO needs to hear them and judge. This is the next critical step.
 
-## Additional Lessons (April 28)
+## Additional Lessons
 
 - **Fast feedback loops beat thorough pipelines.** When the PO asked to skip tests during sound tuning, iteration speed went from ~30s to ~3s per cycle. The PO heard 50+ variations in the time it would have taken to run 10 test-validated ones. For subjective quality (sound, UI), speed of feedback matters more than code correctness guarantees. Run tests *after* the PO approves, not during exploration.
 
