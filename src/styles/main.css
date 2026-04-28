@@ -66,6 +66,13 @@ html, body {
   letter-spacing: 0.02em;
 }
 
+.header__sub {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  margin-top: 0.25rem;
+  letter-spacing: 0.04em;
+}
+
 /* Visualizer Canvas */
 .visualizer-container {
   width: 100%;
