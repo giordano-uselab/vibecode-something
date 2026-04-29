@@ -53,8 +53,11 @@ export class CoffeeShopGenerator extends BaseSoundGenerator {
     // Warm ambient bed — the soul of the relaxation
     this.createWarmBed(ctx, warmBedOut);
 
-    // Single customer stream — one story per minute
-    this.scheduleStory(ctx, eventsOut, 5000 + Math.random() * 5000);
+    // 2-3 customer streams, staggered
+    const numStreams = 2 + Math.floor(Math.random() * 2);
+    for (let i = 0; i < numStreams; i++) {
+      this.scheduleStory(ctx, eventsOut, 3000 + i * 15000 + Math.random() * 10000);
+    }
   }
 
   /**
@@ -323,23 +326,37 @@ export class CoffeeShopGenerator extends BaseSoundGenerator {
     src.onended = () => { src.disconnect(); lp.disconnect(); nEnv.disconnect(); };
   }
 
-  /** Metallic click: soft, brief */
+  /** Metallic click: steel mechanism (e.g. portafilter latch) */
   private playMetalClick(ctx: AudioContext, output: GainNode): void {
     const now = ctx.currentTime;
-    const vol = 0.01 + Math.random() * 0.006;
-    const baseFreq = 1800 + Math.random() * 800;
+    const vol = 0.008 + Math.random() * 0.004;
 
-    const ratios = [1.0, 1.62];
-    const decays = [0.03, 0.02];
-    for (let p = 0; p < 2; p++) {
+    // Sharp transient — noise burst through HP
+    const buf = this.createNoiseBuffer(ctx, Math.ceil(ctx.sampleRate * 0.02));
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = 3000;
+    const transEnv = ctx.createGain();
+    transEnv.gain.setValueAtTime(vol * 0.5, now);
+    transEnv.gain.exponentialRampToValueAtTime(0.0001, now + 0.008);
+    src.connect(hp); hp.connect(transEnv); transEnv.connect(output);
+    src.start(now); src.stop(now + 0.02);
+    src.onended = () => { src.disconnect(); hp.disconnect(); transEnv.disconnect(); };
+
+    // Two inharmonic metal resonances
+    const freqs = [2200 + Math.random() * 400, 3800 + Math.random() * 600];
+    const decays = [0.04, 0.025];
+    for (let i = 0; i < 2; i++) {
       const osc = ctx.createOscillator();
       osc.type = 'sine';
-      osc.frequency.value = baseFreq * ratios[p];
+      osc.frequency.value = freqs[i];
       const env = ctx.createGain();
-      env.gain.setValueAtTime(vol / (p + 1), now);
-      env.gain.exponentialRampToValueAtTime(0.0001, now + decays[p]);
+      env.gain.setValueAtTime(vol / (i + 1), now);
+      env.gain.exponentialRampToValueAtTime(0.0001, now + decays[i]);
       osc.connect(env); env.connect(output);
-      osc.start(now); osc.stop(now + decays[p] + 0.01);
+      osc.start(now); osc.stop(now + decays[i] + 0.01);
       osc.onended = () => { osc.disconnect(); env.disconnect(); };
     }
   }
@@ -373,65 +390,144 @@ export class CoffeeShopGenerator extends BaseSoundGenerator {
     src.onended = () => { src.disconnect(); hp.disconnect(); bp.disconnect(); env.disconnect(); };
   }
 
-  /** Ceramic clink: delicate, soft */
+  /** Ceramic clink: steel spoon touching porcelain saucer/cup */
   private playCeramicClink(ctx: AudioContext, output: GainNode): void {
     const now = ctx.currentTime;
-    const vol = 0.008 + Math.random() * 0.005;
-    const baseFreq = 2500 + Math.random() * 800;
+    const vol = 0.006 + Math.random() * 0.003;
 
-    const ratios = [1.0, 1.47, 2.09];
-    const decays = [0.04, 0.03, 0.02];
-    const numP = 2 + Math.floor(Math.random() * 2);
+    // 1. Impact transient — tiny noise click
+    const buf = this.createNoiseBuffer(ctx, Math.ceil(ctx.sampleRate * 0.01));
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const transHp = ctx.createBiquadFilter();
+    transHp.type = 'highpass';
+    transHp.frequency.value = 2500;
+    const transEnv = ctx.createGain();
+    transEnv.gain.setValueAtTime(vol * 0.4, now);
+    transEnv.gain.exponentialRampToValueAtTime(0.0001, now + 0.005);
+    src.connect(transHp); transHp.connect(transEnv); transEnv.connect(output);
+    src.start(now); src.stop(now + 0.01);
+    src.onended = () => { src.disconnect(); transHp.disconnect(); transEnv.disconnect(); };
 
-    for (let p = 0; p < numP; p++) {
+    // 2. Ceramic body resonance — the saucer "rings" (porcelain is bright)
+    const bodyFreq = 3200 + Math.random() * 600;
+    const body = ctx.createOscillator();
+    body.type = 'sine';
+    body.frequency.value = bodyFreq;
+    const bodyEnv = ctx.createGain();
+    bodyEnv.gain.setValueAtTime(vol * 0.6, now);
+    bodyEnv.gain.exponentialRampToValueAtTime(0.0001, now + 0.10);
+    body.connect(bodyEnv); bodyEnv.connect(output);
+    body.start(now); body.stop(now + 0.11);
+    body.onended = () => { body.disconnect(); bodyEnv.disconnect(); };
+
+    // 3. Ceramic ring — the bright "ting"
+    const ringFreq = 4800 + Math.random() * 800;
+    const ring = ctx.createOscillator();
+    ring.type = 'sine';
+    ring.frequency.value = ringFreq;
+    const ringEnv = ctx.createGain();
+    ringEnv.gain.setValueAtTime(vol, now);
+    ringEnv.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+    ring.connect(ringEnv); ringEnv.connect(output);
+    ring.start(now); ring.stop(now + 0.09);
+    ring.onended = () => { ring.disconnect(); ringEnv.disconnect(); };
+
+    // 4. High shimmer — metallic edge from the spoon
+    const shimFreq = 7500 + Math.random() * 1500;
+    const shim = ctx.createOscillator();
+    shim.type = 'sine';
+    shim.frequency.value = shimFreq;
+    const shimEnv = ctx.createGain();
+    shimEnv.gain.setValueAtTime(vol * 0.3, now);
+    shimEnv.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
+    shim.connect(shimEnv); shimEnv.connect(output);
+    shim.start(now); shim.stop(now + 0.05);
+    shim.onended = () => { shim.disconnect(); shimEnv.disconnect(); };
+  }
+
+  /** Coin: metal on wood/marble counter */
+  private playCoin(ctx: AudioContext, output: GainNode): void {
+    const now = ctx.currentTime;
+    const vol = 0.005 + Math.random() * 0.003;
+
+    // Sharp transient
+    const buf = this.createNoiseBuffer(ctx, Math.ceil(ctx.sampleRate * 0.008));
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = 4000;
+    const tEnv = ctx.createGain();
+    tEnv.gain.setValueAtTime(vol * 0.3, now);
+    tEnv.gain.exponentialRampToValueAtTime(0.0001, now + 0.004);
+    src.connect(hp); hp.connect(tEnv); tEnv.connect(output);
+    src.start(now); src.stop(now + 0.008);
+    src.onended = () => { src.disconnect(); hp.disconnect(); tEnv.disconnect(); };
+
+    // Coin ring — two inharmonic partials
+    const f1 = 3500 + Math.random() * 800;
+    const f2 = f1 * (1.38 + Math.random() * 0.1);
+    const freqs = [f1, f2];
+    const decays = [0.035, 0.02];
+    for (let i = 0; i < 2; i++) {
       const osc = ctx.createOscillator();
       osc.type = 'sine';
-      osc.frequency.value = baseFreq * ratios[p] * (0.97 + Math.random() * 0.06);
+      osc.frequency.value = freqs[i];
       const env = ctx.createGain();
-      env.gain.setValueAtTime(vol / (p + 1), now);
-      env.gain.exponentialRampToValueAtTime(0.0001, now + decays[p]);
+      env.gain.setValueAtTime(vol / (i + 1), now);
+      env.gain.exponentialRampToValueAtTime(0.0001, now + decays[i]);
       osc.connect(env); env.connect(output);
-      osc.start(now); osc.stop(now + decays[p] + 0.01);
+      osc.start(now); osc.stop(now + decays[i] + 0.01);
       osc.onended = () => { osc.disconnect(); env.disconnect(); };
     }
   }
 
-  /** Coin: tiny soft tap */
-  private playCoin(ctx: AudioContext, output: GainNode): void {
-    const now = ctx.currentTime;
-    const vol = 0.006 + Math.random() * 0.004;
-    const baseFreq = 3000 + Math.random() * 1000;
-
-    const osc = ctx.createOscillator();
-    osc.type = 'sine';
-    osc.frequency.value = baseFreq;
-    const env = ctx.createGain();
-    env.gain.setValueAtTime(vol, now);
-    env.gain.exponentialRampToValueAtTime(0.0001, now + 0.025);
-    osc.connect(env); env.connect(output);
-    osc.start(now); osc.stop(now + 0.035);
-    osc.onended = () => { osc.disconnect(); env.disconnect(); };
-  }
-
-  /** Spoon stirring: very slow, barely-there taps */
+  /** Spoon stirring: steel spoon circling inside ceramic cup */
   private playStirring(ctx: AudioContext, output: GainNode): void {
     const numTaps = 4 + Math.floor(Math.random() * 3);
     const interval = 0.22 + Math.random() * 0.1;
-    const baseFreq = 3200 + Math.random() * 800;
 
     for (let i = 0; i < numTaps; i++) {
-      const startTime = ctx.currentTime + i * interval + (Math.random() * 0.02);
-      const vol = 0.002 + Math.random() * 0.002;
+      const t = ctx.currentTime + i * interval + (Math.random() * 0.02);
+      const vol = 0.002 + Math.random() * 0.0015;
+      // Each tap varies slightly — spoon hits different part of cup
+      const bodyF = 3000 + Math.random() * 800;
+      const ringF = 4600 + Math.random() * 1000;
+      const shimF = 7000 + Math.random() * 2000;
 
-      const osc = ctx.createOscillator();
-      osc.type = 'sine';
-      osc.frequency.value = baseFreq * (0.98 + Math.random() * 0.04);
-      const env = ctx.createGain();
-      env.gain.setValueAtTime(vol, startTime);
-      env.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.012);
-      osc.connect(env); env.connect(output);
-      osc.start(startTime); osc.stop(startTime + 0.02);
-      osc.onended = () => { osc.disconnect(); env.disconnect(); };
+      // Ceramic body
+      const b = ctx.createOscillator();
+      b.type = 'sine';
+      b.frequency.value = bodyF;
+      const bE = ctx.createGain();
+      bE.gain.setValueAtTime(vol * 0.5, t);
+      bE.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+      b.connect(bE); bE.connect(output);
+      b.start(t); b.stop(t + 0.06);
+      b.onended = () => { b.disconnect(); bE.disconnect(); };
+
+      // Ring
+      const r = ctx.createOscillator();
+      r.type = 'sine';
+      r.frequency.value = ringF;
+      const rE = ctx.createGain();
+      rE.gain.setValueAtTime(vol, t);
+      rE.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+      r.connect(rE); rE.connect(output);
+      r.start(t); r.stop(t + 0.05);
+      r.onended = () => { r.disconnect(); rE.disconnect(); };
+
+      // High shimmer — very subtle
+      const s = ctx.createOscillator();
+      s.type = 'sine';
+      s.frequency.value = shimF;
+      const sE = ctx.createGain();
+      sE.gain.setValueAtTime(vol * 0.15, t);
+      sE.gain.exponentialRampToValueAtTime(0.0001, t + 0.015);
+      s.connect(sE); sE.connect(output);
+      s.start(t); s.stop(t + 0.03);
+      s.onended = () => { s.disconnect(); sE.disconnect(); };
     }
   }
 

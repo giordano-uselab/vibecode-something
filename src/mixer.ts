@@ -12,6 +12,9 @@ export class SoundMixer {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private compressor: DynamicsCompressorNode | null = null;
+  private analyser: AnalyserNode | null = null;
+  private freqData: Uint8Array<ArrayBuffer> | null = null;
+  private timeData: Uint8Array<ArrayBuffer> | null = null;
   private boundResumeHandler: (() => void) | null = null;
   private wakeLock: WakeLockSentinel | null = null;
   private readonly _state: AppState;
@@ -42,6 +45,30 @@ export class SoundMixer {
     return this.generators.get(id);
   }
 
+  /** Get current frequency spectrum (0-255 per bin). Returns null if no audio context. */
+  getFrequencyData(): Uint8Array | null {
+    if (!this.analyser || !this.freqData) return null;
+    this.analyser.getByteFrequencyData(this.freqData);
+    return this.freqData;
+  }
+
+  /** Get current waveform (0-255, 128 = silence). Returns null if no audio context. */
+  getTimeDomainData(): Uint8Array | null {
+    if (!this.analyser || !this.timeData) return null;
+    this.analyser.getByteTimeDomainData(this.timeData);
+    return this.timeData;
+  }
+
+  /** Number of frequency bins (fftSize / 2) */
+  get frequencyBinCount(): number {
+    return this.analyser?.frequencyBinCount ?? 0;
+  }
+
+  /** Sample rate of audio context */
+  get sampleRate(): number {
+    return this.ctx?.sampleRate ?? 44100;
+  }
+
   private ensureAudioContext(): { ctx: AudioContext; master: GainNode } {
     if (!this.ctx) {
       this.ctx = new AudioContext();
@@ -57,7 +84,16 @@ export class SoundMixer {
 
       this.masterGain = this.ctx.createGain();
       this.masterGain.gain.value = this._state.masterVolume;
-      this.masterGain.connect(this.compressor);
+
+      // Analyser for visualizer — sits between master and compressor
+      this.analyser = this.ctx.createAnalyser();
+      this.analyser.fftSize = 256;
+      this.analyser.smoothingTimeConstant = 0.75;
+      this.freqData = new Uint8Array(this.analyser.frequencyBinCount);
+      this.timeData = new Uint8Array(this.analyser.fftSize);
+
+      this.masterGain.connect(this.analyser);
+      this.analyser.connect(this.compressor);
 
       // Auto-resume if browser suspends the context
       this.ctx.addEventListener('statechange', () => {
