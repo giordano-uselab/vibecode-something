@@ -27,12 +27,7 @@ import {
 import { RomanPiazzaGenerator, AncientKyotoGenerator, AmsterdamCanalGenerator } from './audio/soundscapes/index';
 import { SoundMixer } from './mixer';
 import { Controls } from './ui/controls';
-import { registerLayeredSound } from './ui/controls';
 import { Visualizer } from './ui/visualizer';
-
-// Register layer definitions for sounds with per-layer mute
-registerLayeredSound('train-journey', TrainJourneyGenerator.LAYERS);
-registerLayeredSound('coffee-shop', CoffeeShopGenerator.LAYERS);
 
 /**
  * Nois — Application entry point.
