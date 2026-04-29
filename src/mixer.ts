@@ -37,6 +37,11 @@ export class SoundMixer {
     return this._state;
   }
 
+  /** Get a generator instance by id (if created) */
+  getGenerator(id: string): SoundGenerator | undefined {
+    return this.generators.get(id);
+  }
+
   private ensureAudioContext(): { ctx: AudioContext; master: GainNode } {
     if (!this.ctx) {
       this.ctx = new AudioContext();

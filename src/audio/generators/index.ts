@@ -19,10 +19,14 @@ export { CricketsNightGenerator } from './crickets-night';
 // Urban
 export { CoffeeShopGenerator } from './coffee-shop';
 export { HorseHoovesGenerator } from './horse-hooves';
-export { CrowdMurmurGenerator } from './crowd-murmur';
 export { TrainJourneyGenerator } from './train-journey';
 
 // Focus
 export { DeepSpaceGenerator } from './white-noise';
-export { DeepWaterGenerator } from './brown-noise';
 export { TibetanBowlGenerator } from './tibetan-bowl';
+
+// Experimental
+export { HorrorGhostsGenerator } from './horror-ghosts';
+export { HorrorMusicGenerator } from './horror-music';
+export { HorrorHeartbeatGenerator } from './horror-heartbeat';
+export { DrippingCaveGenerator } from './horror-dripping-cave';

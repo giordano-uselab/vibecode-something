@@ -16,16 +16,23 @@ import {
   CricketsNightGenerator,
   CoffeeShopGenerator,
   HorseHoovesGenerator,
-  CrowdMurmurGenerator,
   TrainJourneyGenerator,
   DeepSpaceGenerator,
-  DeepWaterGenerator,
   TibetanBowlGenerator,
+  HorrorGhostsGenerator,
+  HorrorMusicGenerator,
+  HorrorHeartbeatGenerator,
+  DrippingCaveGenerator,
 } from './audio/generators/index';
 import { RomanPiazzaGenerator, AncientKyotoGenerator, AmsterdamCanalGenerator } from './audio/soundscapes/index';
 import { SoundMixer } from './mixer';
 import { Controls } from './ui/controls';
+import { registerLayeredSound } from './ui/controls';
 import { Visualizer } from './ui/visualizer';
+
+// Register layer definitions for sounds with per-layer mute
+registerLayeredSound('train-journey', TrainJourneyGenerator.LAYERS);
+registerLayeredSound('coffee-shop', CoffeeShopGenerator.LAYERS);
 
 /**
  * Nois — Application entry point.
@@ -52,12 +59,14 @@ const soundMetas: SoundMeta[] = [
   // Urban
   { id: 'coffee-shop', name: 'Coffee Shop', category: 'basic', icon: '☕', description: 'Background murmur with glass clinks' },
   { id: 'horse-hooves', name: 'Horse Hooves', category: 'basic', icon: '🐴', description: 'Rhythmic clip-clop on cobblestones' },
-  { id: 'crowd-murmur', name: 'Crowd Murmur', category: 'basic', icon: '👥', description: 'Distant people talking, indistinct' },
   { id: 'train-journey', name: 'Train Journey', category: 'basic', icon: '🚂', description: 'Rhythmic rail clacking with gentle sway' },
   // Focus
   { id: 'deep-space', name: 'Deep Space', category: 'basic', icon: '🌌', description: 'Low cosmic hum — vast and empty' },
-  { id: 'deep-water', name: 'Deep Water', category: 'basic', icon: '🫧', description: 'Submerged, muffled, pressure feeling' },
-  { id: 'tibetan-bowl', name: 'Tibetan Bowl', category: 'basic', icon: '🔔', description: 'Resonating singing bowl tones' },
+  { id: 'tibetan-bowl', name: 'Tibetan Bowl', category: 'basic', icon: '🔔', description: 'Resonating singing bowl tones' },  // Experimental
+  { id: 'horror-ghosts', name: 'Horror - Ghosts', category: 'basic', icon: '👻', description: 'Eerie ghostly voices from the beyond' },
+  { id: 'horror-music', name: 'Horror - Music', category: 'basic', icon: '🎵', description: 'Dissonant drones and eerie stingers' },
+  { id: 'horror-heartbeat', name: 'Horror - Heartbeat', category: 'basic', icon: '🫀', description: 'Slow ominous heartbeat pounding in the dark' },
+  { id: 'dripping-cave', name: 'Horror - Dripping Cave', category: 'basic', icon: '💧', description: 'Steady drip in a silent cave' },
   // Soundscapes
   { id: 'roman-piazza', name: 'Roman Piazza', category: 'soundscape', icon: '🏛️', description: 'Fountain, crowds, horse hooves, and church bells in a sun-warmed Italian square' },
   { id: 'ancient-kyoto', name: 'Ancient Kyoto', category: 'soundscape', icon: '⛩️', description: 'Temple gong, bamboo wind, kendo swords, and shakuhachi in a serene Japanese garden' },
@@ -81,11 +90,13 @@ const generators: Record<string, () => import('./types').SoundGenerator> = {
   'crickets-night': () => new CricketsNightGenerator(),
   'coffee-shop': () => new CoffeeShopGenerator(),
   'horse-hooves': () => new HorseHoovesGenerator(),
-  'crowd-murmur': () => new CrowdMurmurGenerator(),
   'train-journey': () => new TrainJourneyGenerator(),
   'deep-space': () => new DeepSpaceGenerator(),
-  'deep-water': () => new DeepWaterGenerator(),
   'tibetan-bowl': () => new TibetanBowlGenerator(),
+  'horror-ghosts': () => new HorrorGhostsGenerator(),
+  'horror-music': () => new HorrorMusicGenerator(),
+  'horror-heartbeat': () => new HorrorHeartbeatGenerator(),
+  'dripping-cave': () => new DrippingCaveGenerator(),
   'roman-piazza': () => new RomanPiazzaGenerator(),
   'ancient-kyoto': () => new AncientKyotoGenerator(),
   'amsterdam-canal': () => new AmsterdamCanalGenerator(),
@@ -138,3 +149,4 @@ visualizer.start();
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(() => {/* ok */});
 }
+

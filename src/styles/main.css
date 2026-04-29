@@ -262,6 +262,38 @@ html, body {
 }
 
 /* Master Controls */
+/* Layer mute controls (debug/tuning) */
+.layer-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+}
+
+.layer-mute-btn {
+  font-size: 0.65rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.layer-mute-btn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--accent);
+}
+
+.layer-mute-btn.muted {
+  opacity: 0.4;
+  background: transparent;
+  text-decoration: line-through;
+}
+
 .master-controls {
   width: 100%;
   max-width: 720px;

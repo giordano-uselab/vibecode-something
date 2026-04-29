@@ -1,6 +1,33 @@
 import type { SoundMeta } from '../types';
 import { SoundMixer } from '../mixer';
 
+/** Generators that support per-layer mute */
+interface LayeredGenerator {
+  setLayerMuted(layer: string, muted: boolean): void;
+  isLayerMuted(layer: string): boolean;
+}
+
+interface LayerDef { key: string; label: string }
+
+/** IDs of sounds that have layer controls + their static LAYERS */
+const LAYERED_SOUNDS: Record<string, LayerDef[]> = {};
+
+// Lazy-load layer definitions from the generators to avoid circular deps
+function getLayerDefs(id: string): LayerDef[] | undefined {
+  return LAYERED_SOUNDS[id];
+}
+
+/** Register a layered sound's definitions (called at module init) */
+export function registerLayeredSound(id: string, layers: readonly LayerDef[]): void {
+  LAYERED_SOUNDS[id] = [...layers];
+}
+
+function isLayeredGenerator(gen: unknown): gen is LayeredGenerator {
+  return gen != null
+    && typeof (gen as LayeredGenerator).setLayerMuted === 'function'
+    && typeof (gen as LayeredGenerator).isLayerMuted === 'function';
+}
+
 /**
  * UI Controls — renders sound cards, sliders, and master controls.
  * Single Responsibility: only DOM rendering and event binding.
@@ -68,6 +95,8 @@ export class Controls {
     const state = this.mixer.state.sounds[meta.id];
     const isActive = state?.active ?? false;
     const volume = state?.volume ?? 0.3;
+    const layers = getLayerDefs(meta.id);
+    const showLayers = isActive && layers;
 
     return `
       <div class="sound-card ${isActive ? 'active' : ''}" data-sound-id="${meta.id}">
@@ -81,6 +110,26 @@ export class Controls {
         </div>
         <input type="range" class="volume-slider" data-volume-id="${meta.id}"
                min="0" max="100" value="${volume * 100}" />
+        ${showLayers ? this.renderLayerControls(meta.id, layers) : ''}
+      </div>
+    `;
+  }
+
+  private renderLayerControls(soundId: string, layers: LayerDef[]): string {
+    const gen = this.mixer.getGenerator(soundId);
+    const layered = isLayeredGenerator(gen);
+
+    return `
+      <div class="layer-controls" data-layer-parent="${soundId}">
+        ${layers.map(({ key, label }) => {
+          const muted = layered && gen.isLayerMuted(key);
+          return `
+            <button class="layer-mute-btn ${muted ? 'muted' : ''}"
+                    data-layer-sound="${soundId}" data-layer-key="${key}">
+              ${muted ? '🔇' : '🔊'} ${label}
+            </button>
+          `;
+        }).join('')}
       </div>
     `;
   }
@@ -130,6 +179,31 @@ export class Controls {
       this.updateAllCards();
       this.onStateChange();
     });
+
+    // Layer mute buttons
+    this.bindLayerMuteButtons();
+  }
+
+  private bindLayerMuteButtons(): void {
+    this.container.querySelectorAll<HTMLButtonElement>('.layer-mute-btn').forEach((btn) => {
+      const soundId = btn.dataset.layerSound;
+      const key = btn.dataset.layerKey;
+      if (!soundId || !key) return;
+
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const gen = this.mixer.getGenerator(soundId);
+        if (!isLayeredGenerator(gen)) return;
+
+        const wasMuted = gen.isLayerMuted(key);
+        gen.setLayerMuted(key, !wasMuted);
+
+        const layers = getLayerDefs(soundId);
+        const label = layers?.find(l => l.key === key)?.label ?? key;
+        btn.classList.toggle('muted', !wasMuted);
+        btn.textContent = `${!wasMuted ? '🔇' : '🔊'} ${label}`;
+      });
+    });
   }
 
   private updateCard(id: string): void {
@@ -144,6 +218,23 @@ export class Controls {
 
     const slider = card.querySelector('.volume-slider') as HTMLInputElement;
     if (slider) slider.value = String(state.volume * 100);
+
+    // Show/hide layer controls for layered sounds
+    const layers = getLayerDefs(id);
+    const existing = card.querySelector('.layer-controls');
+    if (layers && state.active) {
+      if (!existing) {
+        const div = document.createElement('div');
+        div.innerHTML = this.renderLayerControls(id, layers);
+        const layerEl = div.firstElementChild;
+        if (layerEl) {
+          card.appendChild(layerEl);
+          this.bindLayerMuteButtons();
+        }
+      }
+    } else {
+      existing?.remove();
+    }
   }
 
   updateAllCards(): void {

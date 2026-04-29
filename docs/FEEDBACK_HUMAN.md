@@ -17,3 +17,4 @@ Notes, impressions, and observations from the product owner about the vibecoding
 - **You don't need to know the language, you need to understand the process.** I don't know TypeScript or the Web Audio API, but I know exactly what each sound generator does procedurally. This allowed me to give precise feedback and optimize sessions — for example, during rapid sound feedback cycles, I asked to skip tests and checks to speed up iterations. Knowing *what* happens under the hood, even without knowing *how* it's written, is a huge advantage.
 
 - **The product is good, the visuals are the weak point.** The sounds are convincing, the architecture is solid, but improving the visual side is hard with vibecoding. The AI can write CSS all day, but design requires a human eye and aesthetic sensibility that you don't get from "make it prettier." You'd need visual references, mockups, or a design system to follow.
+no
