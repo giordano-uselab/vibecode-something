@@ -231,14 +231,13 @@ class BaseSoundGenerator: SoundGenerator {
 
     /// Initialize a pool of one-shot players connected to the given output.
     func setupOneshotPool(engine: AVAudioEngine, output: AVAudioNode, size: Int = 6) {
-        let fmt = monoFormat()
         for _ in 0..<size {
             let player = AVAudioPlayerNode()
             let gain = AVAudioMixerNode()
             engine.attach(player)
             engine.attach(gain)
-            engine.connect(player, to: gain, format: fmt)
-            engine.connect(gain, to: output, format: fmt)
+            engine.connect(player, to: gain, format: nil)
+            engine.connect(gain, to: output, format: nil)
             gain.outputVolume = 0
             oneshotPlayers.append(player)
             oneshotGains.append(gain)
@@ -308,7 +307,7 @@ class BaseSoundGenerator: SoundGenerator {
     func createLoopingPlayer(engine: AVAudioEngine, buffer: AVAudioPCMBuffer, output: AVAudioNode) -> AVAudioPlayerNode {
         let player = AVAudioPlayerNode()
         engine.attach(player)
-        engine.connect(player, to: output, format: monoFormat())
+        engine.connect(player, to: output, format: nil)
         return player
     }
 
@@ -328,7 +327,7 @@ class BaseSoundGenerator: SoundGenerator {
         band.gain = gain
         band.bypass = false
         engine.attach(eq)
-        engine.connect(eq, to: output, format: monoFormat())
+        engine.connect(eq, to: output, format: nil)
         return eq
     }
 
@@ -336,7 +335,7 @@ class BaseSoundGenerator: SoundGenerator {
     func createGainNode(engine: AVAudioEngine, volume: Float, output: AVAudioNode) -> AVAudioMixerNode {
         let mixer = AVAudioMixerNode()
         engine.attach(mixer)
-        engine.connect(mixer, to: output, format: monoFormat())
+        engine.connect(mixer, to: output, format: nil)
         mixer.outputVolume = volume
         return mixer
     }
