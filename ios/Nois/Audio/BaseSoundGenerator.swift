@@ -37,7 +37,7 @@ class BaseSoundGenerator: SoundGenerator {
         engine.connect(out, to: mixer, format: nil)
         out.outputVolume = volume * 3 // match web's x3 amplification
         self.outputMixer = out
-        self.format = out.outputFormat(forBus: 0)
+        self.format = monoFormat()
 
         buildAudioGraph(engine: engine, output: out)
     }
@@ -308,14 +308,14 @@ class BaseSoundGenerator: SoundGenerator {
     func createLoopingPlayer(engine: AVAudioEngine, buffer: AVAudioPCMBuffer, output: AVAudioNode) -> AVAudioPlayerNode {
         let player = AVAudioPlayerNode()
         engine.attach(player)
-        engine.connect(player, to: output, format: buffer.format)
+        engine.connect(player, to: output, format: monoFormat())
         return player
     }
 
     /// Start a player node looping a buffer.
     func startLooping(player: AVAudioPlayerNode, buffer: AVAudioPCMBuffer) {
-        if !player.isPlaying { player.play() }
         player.scheduleBuffer(buffer, at: nil, options: .loops)
+        if !player.isPlaying { player.play() }
     }
 
     /// Create and attach an EQ filter node.
