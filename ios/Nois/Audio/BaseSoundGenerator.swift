@@ -231,17 +231,24 @@ class BaseSoundGenerator: SoundGenerator {
 
     /// Initialize a pool of one-shot players connected to the given output.
     func setupOneshotPool(engine: AVAudioEngine, output: AVAudioNode, size: Int = 6) {
+        let fmt = monoFormat()
         for _ in 0..<size {
             let player = AVAudioPlayerNode()
             let gain = AVAudioMixerNode()
             engine.attach(player)
             engine.attach(gain)
-            engine.connect(player, to: gain, format: nil)
-            engine.connect(gain, to: output, format: nil)
+            engine.connect(player, to: gain, format: fmt)
+            engine.connect(gain, to: output, format: fmt)
             gain.outputVolume = 0
             oneshotPlayers.append(player)
             oneshotGains.append(gain)
-            player.play()
+        }
+    }
+
+    /// Start all one-shot players (call from startAudioGraph).
+    func startOneshotPool() {
+        for player in oneshotPlayers {
+            if !player.isPlaying { player.play() }
         }
     }
 
@@ -252,6 +259,7 @@ class BaseSoundGenerator: SoundGenerator {
         oneshotIndex += 1
         let player = oneshotPlayers[idx]
         let gain = oneshotGains[idx]
+        if !player.isPlaying { player.play() }
         gain.outputVolume = volume
         player.scheduleBuffer(buffer, at: nil, options: [], completionHandler: nil)
     }
@@ -306,8 +314,8 @@ class BaseSoundGenerator: SoundGenerator {
 
     /// Start a player node looping a buffer.
     func startLooping(player: AVAudioPlayerNode, buffer: AVAudioPCMBuffer) {
+        if !player.isPlaying { player.play() }
         player.scheduleBuffer(buffer, at: nil, options: .loops)
-        player.play()
     }
 
     /// Create and attach an EQ filter node.
@@ -320,7 +328,7 @@ class BaseSoundGenerator: SoundGenerator {
         band.gain = gain
         band.bypass = false
         engine.attach(eq)
-        engine.connect(eq, to: output, format: nil)
+        engine.connect(eq, to: output, format: monoFormat())
         return eq
     }
 
@@ -328,7 +336,7 @@ class BaseSoundGenerator: SoundGenerator {
     func createGainNode(engine: AVAudioEngine, volume: Float, output: AVAudioNode) -> AVAudioMixerNode {
         let mixer = AVAudioMixerNode()
         engine.attach(mixer)
-        engine.connect(mixer, to: output, format: nil)
+        engine.connect(mixer, to: output, format: monoFormat())
         mixer.outputVolume = volume
         return mixer
     }
