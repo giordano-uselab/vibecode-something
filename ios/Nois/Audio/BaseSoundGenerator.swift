@@ -231,12 +231,13 @@ class BaseSoundGenerator: SoundGenerator {
 
     /// Initialize a pool of one-shot players connected to the given output.
     func setupOneshotPool(engine: AVAudioEngine, output: AVAudioNode, size: Int = 6) {
+        let mono = monoFormat()
         for _ in 0..<size {
             let player = AVAudioPlayerNode()
             let gain = AVAudioMixerNode()
             engine.attach(player)
             engine.attach(gain)
-            engine.connect(player, to: gain, format: nil)
+            engine.connect(player, to: gain, format: mono)
             engine.connect(gain, to: output, format: nil)
             gain.outputVolume = 0
             oneshotPlayers.append(player)
@@ -307,7 +308,7 @@ class BaseSoundGenerator: SoundGenerator {
     func createLoopingPlayer(engine: AVAudioEngine, buffer: AVAudioPCMBuffer, output: AVAudioNode) -> AVAudioPlayerNode {
         let player = AVAudioPlayerNode()
         engine.attach(player)
-        engine.connect(player, to: output, format: nil)
+        engine.connect(player, to: output, format: buffer.format)
         return player
     }
 
