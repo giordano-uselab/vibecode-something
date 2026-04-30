@@ -98,12 +98,13 @@ final class AudioEngine {
     }
 
     func startSound(_ id: String) {
-        ensureEngineRunning()
-
+        // Build graph with engine stopped to avoid disconnection race conditions
         if generators[id] == nil, let factory = generatorFactories[id] {
+            engine.stop()
             let gen = factory()
             gen.attach(to: engine, mixer: engine.mainMixerNode)
             generators[id] = gen
+            try? engine.start()
         }
 
         guard let gen = generators[id] else { return }
