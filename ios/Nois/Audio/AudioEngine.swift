@@ -22,8 +22,7 @@ final class AudioEngine {
 
     init() {
         engine.attach(masterMixer)
-        engine.connect(masterMixer, to: engine.mainMixerNode, format: nil)
-        masterMixer.outputVolume = masterVolume
+        // Don't connect yet — wait for configureAudioSession
     }
 
     // MARK: - Registration
@@ -42,6 +41,19 @@ final class AudioEngine {
             try session.setActive(true)
         } catch {
             print("Audio session error: \(error)")
+        }
+
+        // Connect master mixer AFTER audio session is active so formats resolve correctly
+        let sr = engine.outputNode.outputFormat(forBus: 0).sampleRate
+        let mono = AVAudioFormat(standardFormatWithSampleRate: sr > 0 ? sr : 48000, channels: 1)!
+        engine.connect(masterMixer, to: engine.mainMixerNode, format: mono)
+        masterMixer.outputVolume = masterVolume
+
+        // Start engine immediately
+        do {
+            try engine.start()
+        } catch {
+            print("Engine start error: \(error)")
         }
 
         NotificationCenter.default.addObserver(
