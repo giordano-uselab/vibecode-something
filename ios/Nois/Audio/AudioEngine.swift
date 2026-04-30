@@ -1,29 +1,22 @@
 import AVFoundation
 import MediaPlayer
 
-/// Central audio engine managing AVAudioEngine, AVAudioSession,
-/// sound generator lifecycle, and system integration (background audio,
-/// lock screen controls, interruption handling).
 @Observable
 final class AudioEngine {
     private let engine = AVAudioEngine()
-    private let masterMixer = AVAudioMixerNode()
     private var generators: [String: SoundGenerator] = [:]
     private var generatorFactories: [String: () -> SoundGenerator] = [:]
 
     private(set) var soundStates: [String: SoundState] = [:]
     var masterVolume: Float = 0.8 {
-        didSet { masterMixer.outputVolume = masterVolume }
+        didSet { engine.mainMixerNode.outputVolume = masterVolume }
     }
 
     var activeSoundCount: Int {
         soundStates.values.filter(\.active).count
     }
 
-    init() {
-        engine.attach(masterMixer)
-        // Don't connect yet — wait for configureAudioSession
-    }
+    init() {}
 
     // MARK: - Registration
 
@@ -35,25 +28,13 @@ final class AudioEngine {
     // MARK: - Audio Session
 
     func configureAudioSession() {
+        #if os(iOS)
         let session = AVAudioSession.sharedInstance()
         do {
             try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
             try session.setActive(true)
         } catch {
             print("Audio session error: \(error)")
-        }
-
-        // Connect master mixer AFTER audio session is active so formats resolve correctly
-        let sr = engine.outputNode.outputFormat(forBus: 0).sampleRate
-        let mono = AVAudioFormat(standardFormatWithSampleRate: sr > 0 ? sr : 48000, channels: 1)!
-        engine.connect(masterMixer, to: engine.mainMixerNode, format: mono)
-        masterMixer.outputVolume = masterVolume
-
-        // Start engine immediately
-        do {
-            try engine.start()
-        } catch {
-            print("Engine start error: \(error)")
         }
 
         NotificationCenter.default.addObserver(
@@ -63,8 +44,18 @@ final class AudioEngine {
         ) { [weak self] notification in
             self?.handleInterruption(notification)
         }
+        #endif
+
+        engine.mainMixerNode.outputVolume = masterVolume
+
+        do {
+            try engine.start()
+        } catch {
+            print("Engine start error: \(error)")
+        }
     }
 
+    #if os(iOS)
     private func handleInterruption(_ notification: Notification) {
         guard let info = notification.userInfo,
               let typeValue = info[AVAudioSessionInterruptionTypeKey] as? UInt,
@@ -72,7 +63,6 @@ final class AudioEngine {
 
         switch type {
         case .began:
-            // System interrupted (phone call, Siri, etc.) — engine paused automatically
             break
         case .ended:
             guard let optionsValue = info[AVAudioSessionInterruptionOptionKey] as? UInt else { return }
@@ -84,6 +74,7 @@ final class AudioEngine {
             break
         }
     }
+    #endif
 
     // MARK: - Engine lifecycle
 
@@ -99,8 +90,7 @@ final class AudioEngine {
     // MARK: - Sound control
 
     func toggleSound(_ id: String) {
-        guard var state = soundStates[id] else { return }
-        if state.active {
+        if soundStates[id]?.active == true {
             stopSound(id)
         } else {
             startSound(id)
@@ -112,7 +102,7 @@ final class AudioEngine {
 
         if generators[id] == nil, let factory = generatorFactories[id] {
             let gen = factory()
-            gen.attach(to: engine, mixer: masterMixer)
+            gen.attach(to: engine, mixer: engine.mainMixerNode)
             generators[id] = gen
         }
 
@@ -155,7 +145,6 @@ final class AudioEngine {
             info[MPMediaItemPropertyTitle] = "Nois — Ambient Soundscapes"
             info[MPMediaItemPropertyArtist] = "Nois"
             center.nowPlayingInfo = info
-
             setupRemoteCommands()
         } else {
             center.nowPlayingInfo = nil

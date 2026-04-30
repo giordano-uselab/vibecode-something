@@ -32,15 +32,17 @@ class BaseSoundGenerator: SoundGenerator {
         self.engine = engine
         self.parentMixer = mixer
 
-        // Resolve format FIRST from the engine output
-        let sr = engine.outputNode.outputFormat(forBus: 0).sampleRate
-        let mono = AVAudioFormat(standardFormatWithSampleRate: sr > 0 ? sr : 44100, channels: 1)!
-        self.format = mono
+        // Use the hardware output format — guaranteed valid after engine.start()
+        let hwFormat = engine.outputNode.outputFormat(forBus: 0)
+        let sr = hwFormat.sampleRate > 0 ? hwFormat.sampleRate : 48000
+        let fmt = AVAudioFormat(standardFormatWithSampleRate: sr, channels: 1)!
+        self.format = fmt
 
         let out = AVAudioMixerNode()
         engine.attach(out)
-        engine.connect(out, to: mixer, format: mono)
-        out.outputVolume = volume * 3 // match web's x3 amplification
+        // Connect to mainMixerNode using its input format — let IT handle conversion
+        engine.connect(out, to: mixer, format: fmt)
+        out.outputVolume = volume * 3
         self.outputMixer = out
 
         buildAudioGraph(engine: engine, output: out)
@@ -112,10 +114,10 @@ class BaseSoundGenerator: SoundGenerator {
 
     /// Create a white noise buffer of the given duration.
     func createNoiseBuffer(engine: AVAudioEngine, duration: Double = 2.0) -> AVAudioPCMBuffer {
-        let sr = engine.outputNode.outputFormat(forBus: 0).sampleRate
-        let format = AVAudioFormat(standardFormatWithSampleRate: sr, channels: 1)!
+        let fmt = self.format ?? AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 1)!
+        let sr = fmt.sampleRate
         let frameCount = AVAudioFrameCount(sr * duration)
-        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)!
+        let buffer = AVAudioPCMBuffer(pcmFormat: fmt, frameCapacity: frameCount)!
         buffer.frameLength = frameCount
         let data = buffer.floatChannelData![0]
         for i in 0..<Int(frameCount) {
@@ -126,10 +128,10 @@ class BaseSoundGenerator: SoundGenerator {
 
     /// Create a brown noise buffer of the given duration.
     func createBrownNoiseBuffer(engine: AVAudioEngine, duration: Double = 4.0) -> AVAudioPCMBuffer {
-        let sr = engine.outputNode.outputFormat(forBus: 0).sampleRate
-        let format = AVAudioFormat(standardFormatWithSampleRate: sr, channels: 1)!
+        let fmt = self.format ?? AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 1)!
+        let sr = fmt.sampleRate
         let frameCount = AVAudioFrameCount(sr * duration)
-        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)!
+        let buffer = AVAudioPCMBuffer(pcmFormat: fmt, frameCapacity: frameCount)!
         buffer.frameLength = frameCount
         let data = buffer.floatChannelData![0]
         var last: Float = 0
@@ -143,10 +145,10 @@ class BaseSoundGenerator: SoundGenerator {
 
     /// Create a pink noise buffer using Paul Kellet's method.
     func createPinkNoiseBuffer(engine: AVAudioEngine, duration: Double = 2.0) -> AVAudioPCMBuffer {
-        let sr = engine.outputNode.outputFormat(forBus: 0).sampleRate
-        let format = AVAudioFormat(standardFormatWithSampleRate: sr, channels: 1)!
+        let fmt = self.format ?? AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 1)!
+        let sr = fmt.sampleRate
         let frameCount = AVAudioFrameCount(sr * duration)
-        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)!
+        let buffer = AVAudioPCMBuffer(pcmFormat: fmt, frameCapacity: frameCount)!
         buffer.frameLength = frameCount
         let data = buffer.floatChannelData![0]
         var b0: Float = 0, b1: Float = 0, b2: Float = 0
