@@ -12,11 +12,7 @@ export class SoundMixer {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private compressor: DynamicsCompressorNode | null = null;
-  private analyser: AnalyserNode | null = null;
-  private freqData: Uint8Array<ArrayBuffer> | null = null;
-  private timeData: Uint8Array<ArrayBuffer> | null = null;
   private boundResumeHandler: (() => void) | null = null;
-  private wakeLock: WakeLockSentinel | null = null;
   private readonly _state: AppState;
 
   constructor(private readonly registry: SoundRegistry) {
@@ -40,35 +36,6 @@ export class SoundMixer {
     return this._state;
   }
 
-  /** Get a generator instance by id (if created) */
-  getGenerator(id: string): SoundGenerator | undefined {
-    return this.generators.get(id);
-  }
-
-  /** Get current frequency spectrum (0-255 per bin). Returns null if no audio context. */
-  getFrequencyData(): Uint8Array | null {
-    if (!this.analyser || !this.freqData) return null;
-    this.analyser.getByteFrequencyData(this.freqData);
-    return this.freqData;
-  }
-
-  /** Get current waveform (0-255, 128 = silence). Returns null if no audio context. */
-  getTimeDomainData(): Uint8Array | null {
-    if (!this.analyser || !this.timeData) return null;
-    this.analyser.getByteTimeDomainData(this.timeData);
-    return this.timeData;
-  }
-
-  /** Number of frequency bins (fftSize / 2) */
-  get frequencyBinCount(): number {
-    return this.analyser?.frequencyBinCount ?? 0;
-  }
-
-  /** Sample rate of audio context */
-  get sampleRate(): number {
-    return this.ctx?.sampleRate ?? 44100;
-  }
-
   private ensureAudioContext(): { ctx: AudioContext; master: GainNode } {
     if (!this.ctx) {
       this.ctx = new AudioContext();
@@ -84,16 +51,7 @@ export class SoundMixer {
 
       this.masterGain = this.ctx.createGain();
       this.masterGain.gain.value = this._state.masterVolume;
-
-      // Analyser for visualizer — sits between master and compressor
-      this.analyser = this.ctx.createAnalyser();
-      this.analyser.fftSize = 256;
-      this.analyser.smoothingTimeConstant = 0.75;
-      this.freqData = new Uint8Array(this.analyser.frequencyBinCount);
-      this.timeData = new Uint8Array(this.analyser.fftSize);
-
-      this.masterGain.connect(this.analyser);
-      this.analyser.connect(this.compressor);
+      this.masterGain.connect(this.compressor);
 
       // Auto-resume if browser suspends the context
       this.ctx.addEventListener('statechange', () => {
@@ -222,33 +180,14 @@ export class SoundMixer {
           this.ctx.resume().catch(() => {});
         }
       });
-
-      this.requestWakeLock();
     } else {
       navigator.mediaSession.playbackState = 'paused';
       navigator.mediaSession.setActionHandler('pause', null);
       navigator.mediaSession.setActionHandler('play', null);
-      this.releaseWakeLock();
     }
   }
 
-  private async requestWakeLock(): Promise<void> {
-    if (this.wakeLock) return;
-    try {
-      if ('wakeLock' in navigator) {
-        this.wakeLock = await navigator.wakeLock.request('screen');
-        this.wakeLock.addEventListener('release', () => { this.wakeLock = null; });
-      }
-    } catch { /* not supported or battery saver */ }
-  }
-
-  private releaseWakeLock(): void {
-    this.wakeLock?.release().catch(() => {});
-    this.wakeLock = null;
-  }
-
   dispose(): void {
-    this.releaseWakeLock();
     if (this.boundResumeHandler) {
       for (const event of ['click', 'touchstart', 'keydown'] as const) {
         document.removeEventListener(event, this.boundResumeHandler);
@@ -265,5 +204,56 @@ export class SoundMixer {
       this.masterGain = null;
       this.compressor = null;
     }
+  }
+
+  // MARK: - URL Sharing
+
+  /** Encode current active sounds + volumes into a URL hash string. */
+  encodeStateToHash(): string {
+    const active = Object.values(this._state.sounds)
+      .filter((s) => s.active)
+      .map((s) => `${s.id}:${Math.round(s.volume * 100)}`);
+    if (active.length === 0) return '';
+    const m = Math.round(this._state.masterVolume * 100);
+    return `#s=${active.join(',')}&m=${m}`;
+  }
+
+  /** Build a full shareable URL from current state. */
+  getShareURL(): string {
+    const hash = this.encodeStateToHash();
+    return `${location.origin}${location.pathname}${hash}`;
+  }
+
+  /** Parse a URL hash and apply the encoded state. */
+  async applyFromHash(hash: string): Promise<boolean> {
+    if (!hash || !hash.includes('s=')) return false;
+
+    const params = new URLSearchParams(hash.replace('#', ''));
+    const soundsParam = params.get('s');
+    const masterParam = params.get('m');
+
+    if (!soundsParam) return false;
+
+    // Parse master volume
+    if (masterParam) {
+      const mv = parseInt(masterParam, 10);
+      if (!isNaN(mv)) this.setMasterVolume(mv / 100);
+    }
+
+    // Parse and activate sounds
+    const entries = soundsParam.split(',');
+    for (const entry of entries) {
+      const [id, volStr] = entry.split(':');
+      if (!id || !this._state.sounds[id]) continue;
+      const vol = parseInt(volStr, 10);
+      if (!isNaN(vol)) this.setVolume(id, vol / 100);
+      if (!this._state.sounds[id].active) {
+        await this.toggleSound(id);
+      }
+    }
+
+    // Clear hash so it doesn't re-apply on refresh
+    history.replaceState(null, '', location.pathname);
+    return true;
   }
 }

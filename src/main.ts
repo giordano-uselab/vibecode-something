@@ -141,6 +141,37 @@ Object.assign(globalThis, { __nois: { mixer, visualizer, controls } });
 // Start the visualizer animation loop
 visualizer.start();
 
+// Apply shared mix from URL hash (if present) — deferred until first user gesture
+// because AudioContext requires a user interaction to start
+if (location.hash && location.hash.includes('s=')) {
+  const savedHash = location.hash;
+  const applyOnGesture = () => {
+    for (const evt of ['click', 'touchstart', 'keydown'] as const) {
+      document.removeEventListener(evt, applyOnGesture);
+    }
+    mixer.applyFromHash(savedHash).then((applied) => {
+      if (applied) controls.updateAllCards();
+    });
+  };
+  for (const evt of ['click', 'touchstart', 'keydown'] as const) {
+    document.addEventListener(evt, applyOnGesture, { once: false });
+  }
+  // Show a banner prompting the user to tap
+  const banner = document.createElement('div');
+  banner.className = 'share-banner';
+  banner.textContent = 'Tap anywhere to start the shared mix';
+  document.body.appendChild(banner);
+  const removeBanner = () => {
+    banner.remove();
+    for (const evt of ['click', 'touchstart', 'keydown'] as const) {
+      document.removeEventListener(evt, removeBanner);
+    }
+  };
+  for (const evt of ['click', 'touchstart', 'keydown'] as const) {
+    document.addEventListener(evt, removeBanner);
+  }
+}
+
 // Register PWA service worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(() => {/* ok */});

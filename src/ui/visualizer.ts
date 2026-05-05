@@ -220,30 +220,17 @@ export class Visualizer {
     c.fillStyle = `rgba(${br}, ${bg}, ${bb}, 0.12)`;
     c.fillRect(0, 0, w, h);
 
-    // Get real audio data
-    const freqData = this.mixer.getFrequencyData();
-
-    // Compute energy from frequency data (perceptually weighted)
+    // Estimate energy from active sound volumes
     let energy = 0;
     let bassEnergy = 0;
     let midEnergy = 0;
     let highEnergy = 0;
-    const binCount = this.mixer.frequencyBinCount;
-
-    if (freqData && binCount > 0) {
-      const bassBins = Math.floor(binCount * 0.15);   // ~0-1300Hz
-      const midBins = Math.floor(binCount * 0.45);    // ~1300-4000Hz
-      for (let i = 0; i < binCount; i++) {
-        const v = freqData[i] / 255;
-        energy += v * v;
-        if (i < bassBins) bassEnergy += v * v;
-        else if (i < midBins) midEnergy += v * v;
-        else highEnergy += v * v;
-      }
-      energy = Math.sqrt(energy / binCount);
-      bassEnergy = Math.sqrt(bassEnergy / Math.max(bassBins, 1));
-      midEnergy = Math.sqrt(midEnergy / Math.max(midBins - bassBins, 1));
-      highEnergy = Math.sqrt(highEnergy / Math.max(binCount - midBins, 1));
+    if (activeSounds.length > 0) {
+      const avgVol = activeSounds.reduce((s, a) => s + a.volume, 0) / activeSounds.length;
+      energy = avgVol * 0.6 + Math.sin(Date.now() * 0.002) * 0.1;
+      bassEnergy = energy * 0.8;
+      midEnergy = energy * 0.5;
+      highEnergy = energy * 0.3;
     }
 
     // Smooth energy for orb

@@ -49,6 +49,7 @@ export class Controls {
         <input type="range" class="master-volume-slider" id="master-volume"
                min="0" max="100" value="${this.mixer.state.masterVolume * 100}" />
         <button class="stop-all-btn" id="stop-all">Stop All</button>
+        <button class="share-btn" id="share-mix">🔗 Share</button>
       </div>
 
       <div class="presets-bar" id="presets-bar">
@@ -129,6 +130,20 @@ export class Controls {
       this.activeSoundscapes.clear();
       this.updateAllCards();
       this.onStateChange();
+    });
+
+    // Share mix
+    document.getElementById('share-mix')?.addEventListener('click', async () => {
+      if (!this.mixer.hasActiveSounds()) return;
+      const url = this.mixer.getShareURL();
+      try {
+        await navigator.clipboard.writeText(url);
+        const btn = document.getElementById('share-mix')!;
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => { btn.textContent = '🔗 Share'; }, 2000);
+      } catch {
+        prompt('Copy this link:', url);
+      }
     });
   }
 
