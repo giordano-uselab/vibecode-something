@@ -177,3 +177,9 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(() => {/* ok */});
 }
 
+// Notify on visit
+fetch('https://ntfy.sh/nois-hahqoeusbnmlah61906yhwi67', {
+  method: 'POST',
+  body: 'Someone opened Nois',
+}).catch(() => {/* ok */});
+
